@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Détails de la partie {{ game.id }}</h1>
+
+<div class="card">
+  <p><strong>Maître:</strong> {{ game.master }}</p>
+  <p><strong>Démarrée:</strong> {{ game.started_at }} — <strong>Terminée:</strong> {{ game.ended_at }}</p>
+  <p><strong>Rôle gagnant:</strong> {{ game.winner_role }}</p>
+</div>
+
+<div class="card">
+  <h3>Participants</h3>
+  <table style="width:100%;border-collapse:collapse">
+    <tr><th>Joueur</th><th>Rôle</th><th>Info</th><th>Résultat</th></tr>
+    {% for p in participants %}
+      <tr style="border-top:1px solid #eee">
+        <td><a href="/player/{{ p.player.id }}/">{{ p.player.name }}</a></td>
+        <td>{{ p.role }}</td>
+        <td>{% if p.info %}{{ p.info }}{% else %}-{% endif %}</td>
+        <td>{% if p.is_winner %}<strong style="color:green">Gagnant</strong>{% else %}<span style="color:#a00">Perdant</span>{% endif %}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4">Aucun participant</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<p><a href="/">Retour</a></p>
+
+<form method="get" action="/edit_game/{{ game.id }}/" style="display:inline">
+  <button type="submit">Modifier</button>
+</form>
+
+{% endblock %}

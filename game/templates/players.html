@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Joueurs</h1>
+
+<style>
+  .player-grid{display:flex;flex-wrap:wrap;gap:12px}
+  .player-card{border:1px solid #ddd;padding:12px;border-radius:8px;width:160px;text-align:center}
+  .player-card a{display:block;font-weight:600;margin-bottom:6px}
+</style>
+
+<div class="card">
+  <h3>Créer un joueur</h3>
+  <form method="post" action="/create_player/">{% csrf_token %}
+    <input name="name" placeholder="Nom" required>
+    <button type="submit">Créer</button>
+  </form>
+</div>
+
+<div class="player-grid">
+  {% for p in players %}
+    <div class="player-card">
+      <a href="/player/{{ p.id }}/">{{ p.name }}</a>
+      <div>{{ p.total }} parties</div>
+    </div>
+  {% empty %}
+    <p>Aucun joueur enregistré.</p>
+  {% endfor %}
+</div>
+
+{% endblock %}

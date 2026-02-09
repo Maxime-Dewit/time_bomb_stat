@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Statistiques</h1>
+
+<div class="card">
+  <h3>Top victoires</h3>
+  <ol>
+    {% for p in wins %}
+      <li>{{ p.name }} — {{ p.wins_count }} victoires</li>
+    {% empty %}
+      <li>Aucune donnée</li>
+    {% endfor %}
+  </ol>
+  
+<div class="card">
+  <h3>Plus méchant / plus gentil (par participations)</h3>
+  <ul>
+    {% for p in role_counts %}
+      <li>{{ p.name }} — Méchant: {{ p.villains }} — Gentil: {{ p.kinds }}</li>
+    {% empty %}
+      <li>Aucune donnée</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="card">
+  <h3>Meilleures combinaisons (paires fréquentes)</h3>
+  <ul>
+    {% for pair in pairs %}
+      <li>
+        {{ pair.a.name }} + {{ pair.b.name }} — {{ pair.count }} parties ensemble
+        ({{ pair.a.name }} victoires: {{ pair.wins_a }}, {{ pair.b.name }} victoires: {{ pair.wins_b }})
+      </li>
+    {% empty %}
+      <li>Aucune donnée</li>
+    {% endfor %}
+  </ul>
+</div>
+
+{% endblock %}

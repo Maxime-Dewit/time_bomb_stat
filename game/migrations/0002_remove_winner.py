@@ -1,0 +1,15 @@
+from django.db import migrations
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('game', '0001_initial'),
+    ]
+
+    operations = [
+        migrations.RemoveField(
+            model_name='game',
+            name='winner',
+        ),
+    ]

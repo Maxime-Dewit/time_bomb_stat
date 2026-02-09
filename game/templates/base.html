@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Time Bomb — Jeu</title>
+    <style>
+      body{font-family:system-ui,Segoe UI,Helvetica,Arial;margin:20px}
+      header{display:flex;gap:10px;margin-bottom:20px}
+      .card{border:1px solid #ddd;padding:12px;border-radius:6px;margin-bottom:12px}
+    </style>
+  </head>
+  <body>
+    <header>
+      <a href="/">Accueil</a>
+      <a href="/stats/">Statistiques</a>
+      <a href="/players/">Joueurs</a>
+
+    </header>
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Stats — {{ player.name }}</h1>
+
+<div class="card">
+  <h2>Résumé</h2>
+  <p><strong>Parties jouées:</strong> {{ total_games }}</p>
+  <p><strong>Victoires:</strong> {{ wins }}</p>
+  <p><strong>Défaites:</strong> {{ losses }}</p>
+  <p><strong>Taux de victoires:</strong> {{ win_pct }}%</p>
+  <div style="max-width:300px;margin-top:12px">
+    <canvas id="winPie"></canvas>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Partenaires fréquents</h3>
+  <label for="sortSelect">Trier par :</label>
+  <select id="sortSelect">
+    <option value="count">Count ensemble</option>
+    <option value="win_pct">Victoires % (ensemble)</option>
+    <option value="wins_partner">Victoires (part.)</option>
+  </select>
+  <table id="partnersTable" style="width:100%;border-collapse:collapse;font-size:16px;margin-top:8px">
+    <thead>
+    <tr>
+      <th>Partenaire</th>
+      <th data-key="count">Count ensemble</th>
+      <th data-key="win_pct">Victoires % (vous)</th>
+      <th data-key="together_villain">Joué méchant</th>
+      <th data-key="wins_both_villain">Victoires méchant</th>
+      <th data-key="losses_both_villain">Défaites méchant</th>
+      <th data-key="together_kind">Joué gentil</th>
+      <th data-key="wins_both_kind">Victoires gentil</th>
+      <th data-key="losses_both_kind">Défaites gentil</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for p in partners %}
+      <tr class="partner-row" style="border-top:1px solid #eee" data-count="{{ p.count }}" data-win_pct="{{ p.win_pct }}" data-wins_partner="{{ p.wins_partner }}">
+        <td style="padding:8px"><a href="/player/{{ p.player.id }}/">{{ p.player.name }}</a></td>
+        <td style="text-align:center">{{ p.count }}</td>
+        <td style="text-align:center">{{ p.win_pct }}%</td>
+        <td style="text-align:center">{{ p.together_villain }}</td>
+        <td style="text-align:center">{{ p.wins_both_villain }}</td>
+        <td style="text-align:center">{{ p.losses_both_villain }}</td>
+        <td style="text-align:center">{{ p.together_kind }}</td>
+        <td style="text-align:center">{{ p.wins_both_kind }}</td>
+        <td style="text-align:center">{{ p.losses_both_kind }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="12">Aucun partenaire</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="card">
+  <form method="post" action="/delete_player/{{ player.id }}/">{% csrf_token %}
+    <button type="submit" onclick="return confirm('Supprimer le joueur {{ player.name }} et toutes ses participations ?')">Supprimer ce joueur</button>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('winPie');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['Victoires','Défaites'],
+        datasets: [{
+          data: [{{ wins }}, {{ losses }}],
+          backgroundColor: ['#2ecc71','#e74c3c']
+        }]
+      },
+      options: {plugins:{legend:{position:'bottom'}}}
+    });
+  }
+</script>
+<script>
+// color rows green when win_pct > 50 and provide sorting by select
+function applyRowColors() {
+  document.querySelectorAll('.partner-row').forEach(r => {
+    const pct = parseFloat(r.dataset.win_pct) || 0;
+    if (pct > 50) r.style.background = '#e6ffea'; else r.style.background = '';
+  });
+}
+
+function sortTableBy(key) {
+  const tbody = document.querySelector('#partnersTable tbody');
+  if (!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll('tr.partner-row'));
+  rows.sort((a,b) => {
+    const va = parseFloat(a.dataset[key]) || 0;
+    const vb = parseFloat(b.dataset[key]) || 0;
+    return vb - va; // descending
+  });
+  rows.forEach(r => tbody.appendChild(r));
+}
+
+document.getElementById('sortSelect').addEventListener('change', function(){
+  sortTableBy(this.value);
+});
+
+// initial
+applyRowColors();
+sortTableBy(document.getElementById('sortSelect').value);
+</script>
+ 
+{% endblock %}

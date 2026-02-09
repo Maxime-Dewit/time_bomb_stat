@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Modifier la partie {{ game.id }}</h1>
+
+<div class="card">
+  <p>Maître: {{ game.master }}</p>
+  <p>Démarrée: {{ game.started_at }} — Terminée: {{ game.ended_at }}</p>
+  <h3>Ajouter un participant</h3>
+  <form method="post">{% csrf_token %}
+    <select name="player">
+      <option value="">-- choisir un joueur --</option>
+      {% for p in available %}
+        <option value="{{ p.name }}">{{ p.name }}</option>
+      {% endfor %}
+    </select>
+    <select name="role">
+      <option value="villain">Méchant</option>
+      <option value="kind">Gentil</option>
+    </select>
+    <input name="info" placeholder="Infos (optionnel)">
+    <button type="submit">Ajouter</button>
+  </form>
+</div>
+
+<p><a href="/">Retour</a></p>
+
+{% endblock %}
