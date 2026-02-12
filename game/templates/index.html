@@ -11,60 +11,20 @@
   </form>
 </div>
 
-{% if active_game %}
-  <div class="card">
-    <h3>Partie en cours — ID {{ active_game.id }}</h3>
-    <p>Maître: {{ active_game.master }}</p>
-    <p>Démarrée: {{ active_game.started_at }}</p>
-         <br>
-         Participants: n°{{ active_game.participations.count }} —  
-         {% for p in active_game.participations.all %}
-           {{ p.player.name }} ({{ p.get_role_display }}){% if p.info %}{% endif %}{% if not forloop.last %}, {% endif %}
-         {% empty %}
-           Aucun participant
-         {% endfor %}
-         <br>
-          <!-- show join form only if game is not ended, or if ended but we're in edit mode -->
-        {% if not active_game.ended_at or request.GET.edit == '1' %}
-        <form style="display:inline" method="post" action="/join_game/{{ active_game.id }}/">{% csrf_token %}
-          <label>Ajouter joueur: </label>
-          <select name="player" required>
-            <option value="">-- choisir un joueur --</option>
-            {% for p in active_game.available_players %}
-              <option value="{{ p.name }}">{{ p.name }}</option>
-            {% endfor %}
-          </select>
-          <select name="role">
-            <option value="villain">Méchant</option>
-            <option value="kind">Gentil</option>
-          </select>
-          <input name="info" placeholder="Infos de la partie">
-          <button type="submit">Ajouter</button>
-        </form>
-        {% endif %}
-    <form method="post" action="/end_game/{{ active_game.id }}/">{% csrf_token %}
-      <label>Gagnant: </label>
-      <select name="winner_role">
-        <option value="villain">Méchant</option>
-        <option value="kind">Gentil</option>
-      </select>
-      <button type="submit">Terminer la partie</button>
-    </form>
-    <form style="display:inline" method="post" action="/delete_game/{{ active_game.id }}/">{% csrf_token %}
-        <button type="submit" onclick="return confirm('Supprimer la partie {{ active_game.id }} ?')">Supprimer</button>
-    </form>
-  </div>
-{% endif %}
-
 <div class="card">
   <h3>Parties récentes</h3>
   <ul>
     {% for g in games %}
       <li>
         Partie {{ g.id }} — Maître: {{ g.master }} — Démarrée: {{ g.started_at }} — Terminée: {{ g.ended_at }}
-        {% if not g.started_at %}
-          <form style="display:inline" method="post" action="/start_game/{{ g.id }}/">{% csrf_token %}
+        {% if not g.started_at and not g.ended_at %}
+          <form style="display:inline" method="post" action="/manage/{{ g.id }}/">{% csrf_token %}
             <button type="submit">Démarrer</button>
+          </form>
+        {% endif %}
+        {% if g.started_at and not g.ended_at %}
+          <form style="display:inline" method="post" action="/manage/{{ g.id }}/">{% csrf_token %}
+            <button type="submit">Reprendre</button>
           </form>
         {% endif %}
           {% if g.ended_at %}
@@ -73,7 +33,7 @@
          <br>
          Participants: 
          {% for p in g.participations.all %}
-           {{ p.player.name }} ({{ p.get_role_display }}){% if p.info %} [{{ p.info }}]{% endif %}{% if not forloop.last %}, {% endif %}
+           {{ p.player.name }} ({{ p.get_role_display }}){% if p.get_info_display %} [{{ p.get_info_display }}]{% endif %}{% if not forloop.last %}, {% endif %}
          {% empty %}
            Aucun participant
          {% endfor %}
@@ -81,6 +41,11 @@
         <form style="display:inline" method="get" action="/game/{{ g.id }}/">
           <button type="submit">Infos</button>
         </form>
+        {% if g.ended_at %}
+        <form style="display:inline" method="post" action="/rematch/{{ g.id }}/">{% csrf_token %}
+          <button type="submit">Refaire une partie</button>
+        </form>
+        {% endif %}
       </li>
     {% empty %}
       <li>Aucune partie</li>

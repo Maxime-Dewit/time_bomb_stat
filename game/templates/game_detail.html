@@ -26,10 +26,14 @@
   </table>
 </div>
 
-<p><a href="/">Retour</a></p>
+<form method="post" action="/delete_game/{{ game.id }}/" style="display:inline">{% csrf_token %}
+  <button type="submit">Supprimer</button>
+</form>
 
 <form method="get" action="/edit_game/{{ game.id }}/" style="display:inline">
   <button type="submit">Modifier</button>
 </form>
+
+<p><a href="/">Retour</a></p>
 
 {% endblock %}

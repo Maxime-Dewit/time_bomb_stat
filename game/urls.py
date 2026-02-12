@@ -18,4 +18,7 @@ urlpatterns = [
     path('players/', views.players_list, name='players_list'),
     path('edit_game/<int:game_id>/', views.edit_game, name='edit_game'),
     path('game/<int:game_id>/', views.game_detail, name='game_detail'),
+    path('manage/<int:game_id>/', views.manage_game, name='manage_game'),
+    path('rematch/<int:game_id>/', views.rematch, name='rematch'),
+    path('remove_participation/<int:game_id>/<int:player_id>/', views.remove_participation, name='remove_participation'),
 ]

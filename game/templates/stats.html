@@ -1,41 +1,193 @@
 {% extends 'base.html' %}
-
+{% load dict_extras %}
 {% block content %}
 <h1>Statistiques</h1>
 
 <div class="card">
   <h3>Top victoires</h3>
+  <div style="display:flex; gap:1.5rem; align-items:flex-start;">
+    <div style="flex:1;">
+      <ol>
+        {% for p in wins %}
+          <li>{{ p.name }} — {{ p.wins_count }} victoires</li>
+        {% empty %}
+          <li>Aucune donnée</li>
+        {% endfor %}
+      </ol>
+    </div>
+    <div style="width:260px;">
+      <div style="display:flex; gap:1rem; align-items:flex-end; justify-content:center; margin:0.5rem 0 1rem 0;">
+        {% for p in wins|slice:":3" %}
+          <div style="width:140px; text-align:center;">
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:flex-end;">
+              <div style="width:100%; border:1px solid #ddd; padding:8px 6px; box-sizing:border-box; background: {% if forloop.counter == 1 %}#ffd700{% elif forloop.counter == 2 %}#c0c0c0{% else %}#cd7f32{% endif %}; height:{% if forloop.counter == 1 %}140px{% elif forloop.counter == 2 %}110px{% else %}90px{% endif %}; display:flex; align-items:flex-end; justify-content:center;">
+                <div style="font-weight:700; font-size:1.1rem">{{ p.wins_count }}</div>
+              </div>
+              <div style="margin-top:6px; font-weight:600">{{ p.name }}</div>
+              <div style="font-size:0.85rem; color:#666">{{ forloop.counter }}{% if forloop.counter == 1 %}er{% else %}e{% endif %}</div>
+            </div>
+          </div>
+        {% empty %}
+          <div>Aucune donnée</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  
+<div class="card">
+  <h3>Plus méchant / plus gentil (par participations)</h3>
+  <div style="display:flex; gap:1.5rem; align-items:flex-start;">
+    <ul style="margin:0; padding-left:1.2rem;">
+      {% for p in role_counts_villains %}
+        <li>{{ p.name }} — Méchant: {{ p.villains }}</li>
+      {% empty %}
+        <li>Aucune donnée</li>
+      {% endfor %}
+    </ul>
+    <ul style="margin:0; padding-left:1.2rem;">
+      {% for p in role_counts_kinds %}
+        <li>{{ p.name }} — Gentil: {{ p.kinds }}</li>
+      {% empty %}
+        <li>Aucune donnée</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+<div class="card">
+  <h3>Plus de parties jouées</h3>
   <ol>
-    {% for p in wins %}
-      <li>{{ p.name }} — {{ p.wins_count }} victoires</li>
+    {% for p in most_played %}
+      <li>{{ p.name }} — {{ p.total }} parties</li>
     {% empty %}
       <li>Aucune donnée</li>
     {% endfor %}
   </ol>
-  
-<div class="card">
-  <h3>Plus méchant / plus gentil (par participations)</h3>
-  <ul>
-    {% for p in role_counts %}
-      <li>{{ p.name }} — Méchant: {{ p.villains }} — Gentil: {{ p.kinds }}</li>
-    {% empty %}
-      <li>Aucune donnée</li>
-    {% endfor %}
-  </ul>
 </div>
-
+<div class="card">
+  <h3>Plus méchant / plus gentil (par victoires)</h3>
+  <div style="display:flex; gap:1.5rem; align-items:flex-start;">
+    <ul style="margin:0; padding-left:1.2rem;">
+      {% for p in win_counts_villains %}
+        <li>{{ p.name }} — Méchant: {{ p.villain_wins }}</li>
+      {% empty %}
+        <li>Aucune donnée</li>
+      {% endfor %}
+    </ul>
+    <ul style="margin:0; padding-left:1.2rem;">
+      {% for p in win_counts_kinds %}
+        <li>{{ p.name }} — Gentil: {{ p.kind_wins }}</li>
+      {% empty %}
+        <li>Aucune donnée</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+<div class="card">
+  <h3>Plus de parties jouées en étant pire / meilleur joueur</h3>
+  <div style="display:flex; gap:1.5rem; align-items:flex-start;">
+    <ul style="margin:0; padding-left:1.2rem;">
+      {% for p in info_counts_pire %}
+        <li>{{ p.name }} — {{ p.pire_count }} fois pire joueur</li>
+      {% empty %}
+        <li>Aucune donnée</li>
+      {% endfor %}
+    </ul>
+    <ul style="margin:0; padding-left:1.2rem;">
+      {% for p in info_counts_meilleur %}
+        <li>{{ p.name }} — {{ p.meilleur_count }} fois meilleur joueur</li>
+      {% empty %}
+        <li>Aucune donnée</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
 <div class="card">
   <h3>Meilleures combinaisons (paires fréquentes)</h3>
-  <ul>
-    {% for pair in pairs %}
-      <li>
-        {{ pair.a.name }} + {{ pair.b.name }} — {{ pair.count }} parties ensemble
-        ({{ pair.a.name }} victoires: {{ pair.wins_a }}, {{ pair.b.name }} victoires: {{ pair.wins_b }})
-      </li>
-    {% empty %}
-      <li>Aucune donnée</li>
-    {% endfor %}
-  </ul>
+  <h4>Tableau — Victoires côté Gentil (%)</h4>
+  <div style="overflow:auto;"> 
+  <table class="matrix" style="border-collapse:collapse; width:100%;">
+    <thead>
+      <tr>
+        <th></th>
+        {% for c in players_cross %}
+          <th style="padding:6px; border:1px solid #ddd; text-align:left">{{ c.name }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in players_cross %}
+      <tr>
+        <th style="padding:6px; border:1px solid #ddd">{{ r.name }}</th>
+        {% for c in players_cross %}
+          {% if r.id == c.id %}
+            <td style="padding:6px; border:1px solid #ddd; background:#f7f7f7"></td>
+          {% else %}
+            {% with rowdict=kind_matrix|get_item:r.id %}
+              {% with val=rowdict|get_item:c.id %}
+                {% with best=row_max_kind|get_item:r.id worst=row_min_kind|get_item:r.id %}
+                  {% if val is not None %}
+                    {% if best and c.id in best %}
+                      <td style="padding:6px; border:1px solid #000000; background:#d4edda">{{ val }}%</td>
+                    {% elif worst and c.id in worst %}
+                      <td style="padding:6px; border:1px solid #000000; background:#f8d7da">{{ val }}%</td>
+                    {% else %}
+                      <td style="padding:6px; border:1px solid #ddd">{{ val }}%</td>
+                    {% endif %}
+                  {% else %}
+                    <td style="padding:6px; border:1px solid #ddd; color:#999">—</td>
+                  {% endif %}
+                {% endwith %}
+              {% endwith %}
+            {% endwith %}
+          {% endif %}
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <h4>Tableau — Victoires côté Méchant (%)</h4>
+  <div style="overflow:auto;"> 
+  <table class="matrix" style="border-collapse:collapse; width:100%;">
+    <thead>
+      <tr>
+        <th></th>
+        {% for c in players_cross %}
+          <th style="padding:6px; border:1px solid #ddd; text-align:left">{{ c.name }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in players_cross %}
+      <tr>
+        <th style="padding:6px; border:1px solid #ddd">{{ r.name }}</th>
+        {% for c in players_cross %}
+          {% if r.id == c.id %}
+            <td style="padding:6px; border:1px solid #ddd; background:#f7f7f7"></td>
+          {% else %}
+            {% with rowdict=villain_matrix|get_item:r.id %}
+              {% with val=rowdict|get_item:c.id %}
+                {% with best=row_max_villain|get_item:r.id worst=row_min_villain|get_item:r.id %}
+                  {% if val is not None %}
+                    {% if best and c.id in best %}
+                      <td style="padding:6px; border:1px solid #000000; background:#d4edda">{{ val }}%</td>
+                    {% elif worst and c.id in worst %}
+                      <td style="padding:6px; border:1px solid #000000; background:#f8d7da">{{ val }}%</td>
+                    {% else %}
+                      <td style="padding:6px; border:1px solid #ddd">{{ val }}%</td>
+                    {% endif %}
+                  {% else %}
+                    <td style="padding:6px; border:1px solid #ddd; color:#999">—</td>
+                  {% endif %}
+                {% endwith %}
+              {% endwith %}
+            {% endwith %}
+          {% endif %}
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
 </div>
-
 {% endblock %}

@@ -7,6 +7,15 @@ ROLE_CHOICES = (
     ('kind', 'Gentil'),
 )
 
+# info possible values for a participation
+INFO_CHOICES = (
+    ('pire', 'Pire joueur'),
+    ('neutre', 'Neutre'),
+    ('meilleur', 'Meilleur joueur'),
+)
+
+INFO_VALUES = [v[0] for v in INFO_CHOICES]
+
 
 class Player(models.Model):
     name = models.CharField(max_length=150, unique=True)
@@ -34,7 +43,7 @@ class Participation(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='participations')
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='participations')
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
-    info = models.TextField(blank=True)
+    info = models.CharField(max_length=20, choices=INFO_CHOICES, default='neutre')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Gérer la partie {{ game.id }}</h1>
+
+<div class="card">
+  <p><strong>Maître:</strong> {{ game.master }}</p>
+  <p><strong>Démarrée:</strong> {{ game.started_at }} — <strong>Terminée:</strong> {{ game.ended_at }}</p>
+  <p><strong>Rôle gagnant:</strong> {{ game.winner_role }}</p>
+</div>
+
+<div class="card">
+  <h3>Participants ({{ participants.count }})</h3>
+  <ul>
+    {% for p in participants %}
+      <li>{{ p.player.name }} ({{ p.get_role_display }}){% if p.get_info_display %} — {{ p.get_info_display }}{% endif %}</li>
+    {% empty %}
+      <li>Aucun participant</li>
+    {% endfor %}
+  </ul>
+</div>
+{% if not game.ended_at %}
+<div class="card">
+  <h3>Phase 1 — Sélection des joueurs</h3>
+  <form method="post" action="" >{% csrf_token %}
+    <input type="hidden" name="action" value="select_players">
+    <div style="max-height:200px;overflow:auto">
+      {% for p in available %}
+        <label style="display:block"><input type="checkbox" name="player" value="{{ p.name }}"> {{ p.name }}</label>
+      {% empty %}
+        <p>Aucun joueur disponible</p>
+      {% endfor %}
+    </div>
+    <button type="submit">Valider participants</button>
+  </form>
+
+  <h4>Créer un joueur</h4>
+  <form method="post" action="/create_player/">{% csrf_token %}
+    <input name="name" placeholder="Nom" required>
+    <button type="submit">Créer</button>
+  </form>
+</div>
+{% if participants.count > 0 %}
+<div class="card">
+  <h3>Phase 2 — Affecter rôle et infos</h3>
+  <p>Définissez les rôles (cocher = Méchant) et les infos, puis cliquez sur <strong>Terminer la partie</strong> — tout sera sauvegardé en une seule fois.</p>
+  <form method="post" action="/end_game/{{ game.id }}/">{% csrf_token %}
+    <table style="width:100%;border-collapse:collapse">
+      <tr><th>Joueur</th><th>Rôle (cocher = Méchant)</th><th>Info</th></tr>
+      {% for p in participants %}
+        <tr style="border-top:1px solid #eee">
+          <td>{{ p.player.name }} <button type="button" class="remove-participant" data-game="{{ game.id }}" data-player="{{ p.player.id }}">Supprimer</button></td>
+          <td style="text-align:center"><input type="checkbox" name="villain_{{ p.player.id }}" {% if p.role == 'villain' %}checked{% endif %}></td>
+          <td>
+            <label style="color:#a00; margin-right:6px"><input type="radio" name="info_{{ p.player.id }}" value="pire" {% if p.info == 'pire' %}checked{% endif %}>Le Pire Joueur</label>
+            <label style="margin:0 6px"><input type="radio" name="info_{{ p.player.id }}" value="neutre" {% if p.info == 'neutre' %}checked{% endif %}> Joueur Neutre</label>
+            <label style="color:blue; margin-left:6px"><input type="radio" name="info_{{ p.player.id }}" value="meilleur" {% if p.info == 'meilleur' %}checked{% endif %}>Le Meilleur Joueur</label>
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+    <p style="margin-top:12px">
+     <form method="post" action="/end_game/{{ game.id }}/">{% csrf_token %}
+    <label>Rôle gagnant: </label>
+    <select name="winner_role">
+      <option value="villain">Méchant</option>
+      <option value="kind">Gentil</option>
+    </select>
+    <button type="submit">Terminer la partie</button>
+  </form>
+    </p>
+  </form>
+</div>
+{% endif %}
+{% endif %}
+{% if game.ended_at %}
+<div class="card">
+  <h3>Actions</h3>
+  <form method="post" action="/start_game/{{ game.id }}/">{% csrf_token %}
+    <button type="submit">Démarrer une nouvelle partie</button>
+  </form>
+  <form style="display:inline" method="post" action="/rematch/{{ game.id }}/">{% csrf_token %}
+    <button type="submit">Refaire une partie</button>
+  </form>
+  <form method="post" action="/delete_game/{{ game.id }}/">{% csrf_token %}
+    <button type="submit" onclick="return confirm('Supprimer la partie {{ game.id }} ?')">Supprimer</button>
+  </form>
+</div>
+{% endif %}
+<p><a href="/">Retour à l'accueil</a></p>
+
+<script>
+// Helper to read CSRF token from cookie (Django default cookie name)
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const buttons = document.querySelectorAll('.remove-participant');
+  buttons.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const gameId = this.dataset.game;
+      const playerId = this.dataset.player;
+      if (!confirm('Retirer ' + this.parentElement.textContent.trim().split('\n')[0] + ' de la partie ?')) return;
+      const url = '/remove_participation/' + gameId + '/' + playerId + '/';
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'Accept': 'application/json',
+        },
+      }).then(function(resp) {
+        if (resp.ok) {
+          window.location.reload();
+        } else {
+          resp.json().then(function(j){ alert('Erreur: ' + (j.message || resp.statusText)); }).catch(function(){ alert('Erreur réseau'); });
+        }
+      }).catch(function(){ alert('Erreur réseau'); });
+    });
+  });
+});
+</script>
+
+{% endblock %}

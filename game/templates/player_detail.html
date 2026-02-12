@@ -8,29 +8,69 @@
   <p><strong>Parties jouées:</strong> {{ total_games }}</p>
   <p><strong>Victoires:</strong> {{ wins }}</p>
   <p><strong>Défaites:</strong> {{ losses }}</p>
-  <p><strong>Taux de victoires:</strong> {{ win_pct }}%</p>
+  <p><strong>Taux de victoires:</strong> {{ win_pct }} %</p>
   <div style="max-width:300px;margin-top:12px">
     <canvas id="winPie"></canvas>
   </div>
 </div>
+<div class="card">
+  <h2>Individuel</h2>
+  <h3>Statistiques</h3>
+  <div style="display:flex; gap:1.5rem; align-items:flex-start;">
+    <ul style="margin:0; padding-left:1.2rem;">
+      <h3>Vilain</h3>
+      <p><strong>Parties jouées:</strong> {{ pct_games_villain }} %</p>
+      <p><strong>Taux de victoires:</strong> {{ pct_wins_villain }} %</p>
+      <div style="max-width:300px;margin-top:12px">
+        <canvas id="winPie_villain"></canvas>
+      </div>
+    </ul>
+    <ul style="margin:0; padding-left:1.2rem;">
+      <h3>Gentil</h3>
+      <p><strong>Parties jouées:</strong> {{ pct_games_kind }} %</p>
+      <p><strong>Taux de victoires:</strong> {{ pct_wins_kind }} %</p>
+      <div style="max-width:300px;margin-top:12px">
+        <canvas id="winPie_kind"></canvas>
+      </div>
+    </ul>
+  </div>
+  <h3>Style du joueur</h3>
+  <div style="display:flex; gap:1.5rem; align-items:flex-start;">
+    <div style="max-width:300px;">
+      <h4>Répartition globale</h4>
+      <canvas id="infoPie"></canvas>
+    </div>
+    <div style="flex:1;">
+      <h4>Quand gagne / perd (par style)</h4>
+      <canvas id="infoBar"></canvas>
+    </div>
+  </div>
 
+</div>
 <div class="card">
   <h3>Partenaires fréquents</h3>
   <label for="sortSelect">Trier par :</label>
   <select id="sortSelect">
-    <option value="count">Count ensemble</option>
+    <option value="count">Partie joué ensemble</option>
+    <option value="together_play_same_team">Partie joué même équipe</option>
     <option value="win_pct">Victoires % (ensemble)</option>
-    <option value="wins_partner">Victoires (part.)</option>
+    <option value="together_villain">Joué vilain</option>
+    <option value="wins_both_villain">Victoires vilain</option>
+    <option value="losses_both_villain">Défaites vilain</option>
+    <option value="together_kind">Joué gentil</option>
+    <option value="wins_both_kind">Victoires gentil</option>
+    <option value="losses_both_kind">Défaites gentil</option>
   </select>
   <table id="partnersTable" style="width:100%;border-collapse:collapse;font-size:16px;margin-top:8px">
     <thead>
     <tr>
       <th>Partenaire</th>
-      <th data-key="count">Count ensemble</th>
-      <th data-key="win_pct">Victoires % (vous)</th>
-      <th data-key="together_villain">Joué méchant</th>
-      <th data-key="wins_both_villain">Victoires méchant</th>
-      <th data-key="losses_both_villain">Défaites méchant</th>
+      <th data-key="count">Partie joué ensemble</th>
+      <th data-key="together_play_same_team">Partie joué même équipe</th>
+      <th data-key="win_pct">Victoires  % (ensemble)</th>
+      <th data-key="together_villain">Joué vilain</th>
+      <th data-key="wins_both_villain">Victoires vilain</th>
+      <th data-key="losses_both_villain">Défaites vilain</th>
       <th data-key="together_kind">Joué gentil</th>
       <th data-key="wins_both_kind">Victoires gentil</th>
       <th data-key="losses_both_kind">Défaites gentil</th>
@@ -38,9 +78,20 @@
     </thead>
     <tbody>
     {% for p in partners %}
-      <tr class="partner-row" style="border-top:1px solid #eee" data-count="{{ p.count }}" data-win_pct="{{ p.win_pct }}" data-wins_partner="{{ p.wins_partner }}">
+      <tr class="partner-row" style="border-top:1px solid #eee"
+          data-count="{{ p.count }}"
+          data-together_play_same_team="{{ p.together_play_same_team }}"
+          data-win_pct="{{ p.win_pct }}"
+          data-wins_partner="{{ p.wins_partner }}"
+          data-together_villain="{{ p.together_villain }}"
+          data-wins_both_villain="{{ p.wins_both_villain }}"
+          data-losses_both_villain="{{ p.losses_both_villain }}"
+          data-together_kind="{{ p.together_kind }}"
+          data-wins_both_kind="{{ p.wins_both_kind }}"
+          data-losses_both_kind="{{ p.losses_both_kind }}">
         <td style="padding:8px"><a href="/player/{{ p.player.id }}/">{{ p.player.name }}</a></td>
         <td style="text-align:center">{{ p.count }}</td>
+        <td style="text-align:center">{{ p.together_play_same_team }}</td>
         <td style="text-align:center">{{ p.win_pct }}%</td>
         <td style="text-align:center">{{ p.together_villain }}</td>
         <td style="text-align:center">{{ p.wins_both_villain }}</td>
@@ -77,7 +128,63 @@
       options: {plugins:{legend:{position:'bottom'}}}
     });
   }
+  const ctx_villain = document.getElementById('winPie_villain');
+  if (ctx_villain) {
+    new Chart(ctx_villain, {
+      type: 'pie',
+      data: {
+        labels: ['Victoires','Défaites'],
+        datasets: [{
+          data: [{{ wins_villain }}, {{ losses_villain }}],
+          backgroundColor: ['#2ecc71','#e74c3c']
+        }]
+      },
+      options: {plugins:{legend:{position:'bottom'}}}
+    });
+  }
+  const ctx_kind = document.getElementById('winPie_kind');
+  if (ctx_kind) {
+    new Chart(ctx_kind, {
+      type: 'pie',
+      data: {
+        labels: ['Victoires','Défaites'],
+        datasets: [{
+          data: [{{ wins_kind }}, {{ losses_kind }}],
+          backgroundColor: ['#2ecc71','#e74c3c']
+        }]
+      },
+      options: {plugins:{legend:{position:'bottom'}}}
+    });
+  }
 </script>
+  <script>
+    const infoPieCtx = document.getElementById('infoPie');
+    if (infoPieCtx) {
+      new Chart(infoPieCtx, {
+        type: 'pie',
+        data: {
+          labels: ['Pire','Neutre','Meilleur'],
+          datasets: [{ data: [{{ cnt_pire }}, {{ cnt_neutre }}, {{ cnt_meilleur }}], backgroundColor: ['#e74c3c','#cccccc','#3498db'] }]
+        },
+        options: {plugins:{legend:{position:'bottom'}}}
+      });
+    }
+
+    const infoBarCtx = document.getElementById('infoBar');
+    if (infoBarCtx) {
+      new Chart(infoBarCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Pire','Neutre','Meilleur'],
+          datasets: [
+            { label: 'Gagné', backgroundColor: '#2ecc71', data: [{{ win_pire }}, {{ win_neutre }}, {{ win_meilleur }}] },
+            { label: 'Perdu', backgroundColor: '#e74c3c', data: [{{ loss_pire }}, {{ loss_neutre }}, {{ loss_meilleur }}] }
+          ]
+        },
+        options: { scales: { y: { beginAtZero: true, precision:0 } }, plugins:{legend:{position:'bottom'}} }
+      });
+    }
+  </script>
 <script>
 // color rows green when win_pct > 50 and provide sorting by select
 function applyRowColors() {

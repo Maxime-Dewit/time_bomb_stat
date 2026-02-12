@@ -8,18 +8,59 @@
   <p>Démarrée: {{ game.started_at }} — Terminée: {{ game.ended_at }}</p>
   <h3>Ajouter un participant</h3>
   <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="select_players">
     <select name="player">
       <option value="">-- choisir un joueur --</option>
       {% for p in available %}
-        <option value="{{ p.name }}">{{ p.name }}</option>
+        <option value="{{ p.name }}">{{ p.name }} ({{ p.total }})</option>
       {% endfor %}
     </select>
     <select name="role">
       <option value="villain">Méchant</option>
       <option value="kind">Gentil</option>
     </select>
-    <input name="info" placeholder="Infos (optionnel)">
+    <select name="info">
+      <option value="neutre">Neutre</option>
+      <option value="pire">Pire joueur</option>
+      <option value="meilleur">Meilleur joueur</option>
+    </select>
     <button type="submit">Ajouter</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Participants</h3>
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="set_roles">
+    <table style="width:100%;border-collapse:collapse">
+      <tr><th>Joueur</th><th>Rôle (cocher = Méchant)</th><th>Info</th><th>Supprimer</th></tr>
+      {% for p in participants %}
+        <tr style="border-top:1px solid #eee">
+          <td>{{ p.player.name }}</td>
+          <td style="text-align:center"><input type="checkbox" name="villain_{{ p.player.id }}" {% if p.role == 'villain' %}checked{% endif %}></td>
+          <td>
+            <label style="color:#a00; margin-right:6px"><input type="radio" name="info_{{ p.player.id }}" value="pire" {% if p.info == 'pire' %}checked{% endif %}> Pire</label>
+            <label style="margin:0 6px"><input type="radio" name="info_{{ p.player.id }}" value="neutre" {% if p.info == 'neutre' %}checked{% endif %}> Neutre</label>
+            <label style="color:blue; margin-left:6px"><input type="radio" name="info_{{ p.player.id }}" value="meilleur" {% if p.info == 'meilleur' %}checked{% endif %}> Meilleur</label>
+          </td>
+          <td style="text-align:center">
+            <form method="post" action="/remove_participation/{{ game.id }}/{{ p.player.id }}/" style="display:inline">{% csrf_token %}
+              <input type="hidden" name="edit" value="1">
+              <button type="submit" onclick="return confirm('Retirer {{ p.player.name }} de la partie ?')">Supprimer</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+    <p style="margin-top:12px">
+      <label>Rôle gagnant: </label>
+      <select name="winner_role">
+        <option value="">(non défini)</option>
+        <option value="villain" {% if game.winner_role == 'villain' %}selected{% endif %}>Méchant</option>
+        <option value="kind" {% if game.winner_role == 'kind' %}selected{% endif %}>Gentil</option>
+      </select>
+      <button type="submit">Enregistrer les changements</button>
+    </p>
   </form>
 </div>
 
