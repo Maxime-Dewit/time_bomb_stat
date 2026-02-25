@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.utils import timezone
-from django.db.models import Count, Q, F
+from django.db.models import Count, Q, F, Case, When, Value, FloatField
+from django.db.models.functions import Round
 import logging
 from .models import Player, Game, Participation, INFO_VALUES
 
@@ -123,9 +124,16 @@ def delete_player(request, player_id):
 
 
 def stats(request):
-    # wins per player: a player wins a game when their participation.role equals the game's winner_role
+    # wins per player: percentage of games the player won (wins / total participations * 100)
     wins = Player.objects.annotate(
-        wins_count=Count('participations', filter=Q(participations__game__winner_role=F('participations__role')))
+        total=Count('participations'),
+        win_count=Count('participations', filter=Q(participations__game__winner_role=F('participations__role')))
+    ).annotate(
+        wins_count=Case(
+            When(total=0, then=Value(0.0)),
+            default=Round(F('win_count') * Value(100.0) / F('total'), 2),
+            output_field=FloatField(),
+        )
     ).order_by('-wins_count')
 
     # role counts: separate querysets so we can sort each list independently
@@ -356,7 +364,7 @@ def game_detail(request, game_id):
             'info': p.get_info_display(),
             'is_winner': is_winner,
         })
-
+    p_list.sort(key=lambda x: (not x['is_winner'], x['player'].name))
     return render(request, 'game_detail.html', {
         'game': game,
         'participants': p_list,
@@ -400,7 +408,7 @@ def manage_game(request, game_id):
 
     # GET: render page with available players and current participants
     available = Player.objects.exclude(participations__game=game).annotate(total=Count('participations')).order_by('-total', 'name')
-    participants = game.participations.select_related('player').all()
+    participants = game.participations.select_related('player').all().order_by('player__name')
     return render(request, 'manage_game.html', {
         'game': game,
         'available': available,
@@ -417,7 +425,7 @@ def rematch(request, game_id):
     new_game = Game.objects.create(master=old.master)
     # copy participations
     for p in old.participations.all():
-        Participation.objects.create(player=p.player, game=new_game, role=p.role, info=p.info)
+        Participation.objects.get_or_create(player=p.player, game=new_game, defaults={'role': 'kind'})
     return start_game(request, new_game.id)
 
 
@@ -429,12 +437,18 @@ def remove_participation(request, game_id, player_id):
     if request.method == 'POST':
         # allow removal in edit mode even if game ended when caller includes edit=1
         if game.ended_at and request.POST.get('edit') != '1':
-            if request.is_ajax():
+            is_json = (request.headers.get('x-requested-with') == 'XMLHttpRequest' or
+                       request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' or
+                       'application/json' in request.headers.get('Accept', ''))
+            if is_json:
                 return JsonResponse({'status': 'error', 'message': 'Game already ended'}, status=400)
             return redirect('game:manage_game', game_id=game.id)
 
         Participation.objects.filter(game=game, player_id=player_id).delete()
-        if request.is_ajax():
+        is_json = (request.headers.get('x-requested-with') == 'XMLHttpRequest' or
+                   request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' or
+                   'application/json' in request.headers.get('Accept', ''))
+        if is_json:
             return JsonResponse({'status': 'ok'})
     return redirect('game:manage_game', game_id=game.id)
 

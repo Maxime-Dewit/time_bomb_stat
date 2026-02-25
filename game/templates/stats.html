@@ -37,68 +37,96 @@
 <div class="card">
   <h3>Plus méchant / plus gentil (par participations)</h3>
   <div style="display:flex; gap:1.5rem; align-items:flex-start;">
-    <ul style="margin:0; padding-left:1.2rem;">
+    <table style="border-collapse:collapse; width:50%">
+      <thead>
+        <tr><th style="text-align:left; padding:6px">#</th><th style="text-align:left; padding:6px">Joueur</th><th style="text-align:right; padding:6px">Méchant</th></tr>
+      </thead>
+      <tbody>
       {% for p in role_counts_villains %}
-        <li>{{ p.name }} — Méchant: {{ p.villains }}</li>
+        <tr style="border-top:1px solid #eee"><td style="padding:6px">{{ forloop.counter }}</td><td style="padding:6px">{{ p.name }}</td><td style="padding:6px; text-align:right">{{ p.villains }}</td></tr>
       {% empty %}
-        <li>Aucune donnée</li>
+        <tr><td colspan="3" style="padding:6px">Aucune donnée</td></tr>
       {% endfor %}
-    </ul>
-    <ul style="margin:0; padding-left:1.2rem;">
+      </tbody>
+    </table>
+
+    <table style="border-collapse:collapse; width:50%">
+      <thead>
+        <tr><th style="text-align:left; padding:6px">#</th><th style="text-align:left; padding:6px">Joueur</th><th style="text-align:right; padding:6px">Gentil</th></tr>
+      </thead>
+      <tbody>
       {% for p in role_counts_kinds %}
-        <li>{{ p.name }} — Gentil: {{ p.kinds }}</li>
+        <tr style="border-top:1px solid #eee"><td style="padding:6px">{{ forloop.counter }}</td><td style="padding:6px">{{ p.name }}</td><td style="padding:6px; text-align:right">{{ p.kinds }}</td></tr>
       {% empty %}
-        <li>Aucune donnée</li>
+        <tr><td colspan="3" style="padding:6px">Aucune donnée</td></tr>
       {% endfor %}
-    </ul>
+      </tbody>
+    </table>
   </div>
 </div>
 <div class="card">
   <h3>Plus de parties jouées</h3>
-  <ol>
+  <table style="width:100%; border-collapse:collapse">
+    <thead><tr><th style="text-align:left;padding:6px">#</th><th style="text-align:left;padding:6px">Joueur</th><th style="text-align:right;padding:6px">Parties</th></tr></thead>
+    <tbody>
     {% for p in most_played %}
-      <li>{{ p.name }} — {{ p.total }} parties</li>
+      <tr style="border-top:1px solid #eee"><td style="padding:6px">{{ forloop.counter }}</td><td style="padding:6px">{{ p.name }}</td><td style="padding:6px; text-align:right">{{ p.total }}</td></tr>
     {% empty %}
-      <li>Aucune donnée</li>
+      <tr><td colspan="3" style="padding:6px">Aucune donnée</td></tr>
     {% endfor %}
-  </ol>
+    </tbody>
+  </table>
 </div>
 <div class="card">
   <h3>Plus méchant / plus gentil (par victoires)</h3>
   <div style="display:flex; gap:1.5rem; align-items:flex-start;">
-    <ul style="margin:0; padding-left:1.2rem;">
+    <table style="border-collapse:collapse; width:50%">
+      <thead><tr><th style="text-align:left;padding:6px">#</th><th style="text-align:left;padding:6px">Joueur</th><th style="text-align:right;padding:6px">Victoires (Méchant)</th></tr></thead>
+      <tbody>
       {% for p in win_counts_villains %}
-        <li>{{ p.name }} — Méchant: {{ p.villain_wins }}</li>
+        <tr style="border-top:1px solid #eee"><td style="padding:6px">{{ forloop.counter }}</td><td style="padding:6px">{{ p.name }}</td><td style="padding:6px; text-align:right">{{ p.villain_wins }}</td></tr>
       {% empty %}
-        <li>Aucune donnée</li>
+        <tr><td colspan="3" style="padding:6px">Aucune donnée</td></tr>
       {% endfor %}
-    </ul>
-    <ul style="margin:0; padding-left:1.2rem;">
+      </tbody>
+    </table>
+
+    <table style="border-collapse:collapse; width:50%">
+      <thead><tr><th style="text-align:left;padding:6px">#</th><th style="text-align:left;padding:6px">Joueur</th><th style="text-align:right;padding:6px">Victoires (Gentil)</th></tr></thead>
+      <tbody>
       {% for p in win_counts_kinds %}
-        <li>{{ p.name }} — Gentil: {{ p.kind_wins }}</li>
+        <tr style="border-top:1px solid #eee"><td style="padding:6px">{{ forloop.counter }}</td><td style="padding:6px">{{ p.name }}</td><td style="padding:6px; text-align:right">{{ p.kind_wins }}</td></tr>
       {% empty %}
-        <li>Aucune donnée</li>
+        <tr><td colspan="3" style="padding:6px">Aucune donnée</td></tr>
       {% endfor %}
-    </ul>
+      </tbody>
+    </table>
   </div>
 </div>
 <div class="card">
   <h3>Plus de parties jouées en étant pire / meilleur joueur</h3>
   <div style="display:flex; gap:1.5rem; align-items:flex-start;">
-    <ul style="margin:0; padding-left:1.2rem;">
+    <table style="border-collapse:collapse; width:50%">
+      <thead><tr><th style="text-align:left;padding:6px">#</th><th style="text-align:left;padding:6px">Joueur</th><th style="text-align:right;padding:6px">Fois pire</th></tr></thead>
+      <tbody>
       {% for p in info_counts_pire %}
-        <li>{{ p.name }} — {{ p.pire_count }} fois pire joueur</li>
+        <tr style="border-top:1px solid #eee"><td style="padding:6px">{{ forloop.counter }}</td><td style="padding:6px">{{ p.name }}</td><td style="padding:6px; text-align:right">{{ p.pire_count }}</td></tr>
       {% empty %}
-        <li>Aucune donnée</li>
+        <tr><td colspan="3" style="padding:6px">Aucune donnée</td></tr>
       {% endfor %}
-    </ul>
-    <ul style="margin:0; padding-left:1.2rem;">
+      </tbody>
+    </table>
+
+    <table style="border-collapse:collapse; width:50%">
+      <thead><tr><th style="text-align:left;padding:6px">#</th><th style="text-align:left;padding:6px">Joueur</th><th style="text-align:right;padding:6px">Fois meilleur</th></tr></thead>
+      <tbody>
       {% for p in info_counts_meilleur %}
-        <li>{{ p.name }} — {{ p.meilleur_count }} fois meilleur joueur</li>
+        <tr style="border-top:1px solid #eee"><td style="padding:6px">{{ forloop.counter }}</td><td style="padding:6px">{{ p.name }}</td><td style="padding:6px; text-align:right">{{ p.meilleur_count }}</td></tr>
       {% empty %}
-        <li>Aucune donnée</li>
+        <tr><td colspan="3" style="padding:6px">Aucune donnée</td></tr>
       {% endfor %}
-    </ul>
+      </tbody>
+    </table>
   </div>
 </div>
 <div class="card">
