@@ -33,13 +33,50 @@
       </div>
     </div>
   </div>
+</div>
+<div class="card">
+  <h3>Victoire vs % joué Villain</h3>
+  <div style="max-width:900px;">
+    <canvas id="victoryVillainChart" height="260"></canvas>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    (function(){
+      const points = {{ players_chart_json|safe }} || [];
+      const dataPoints = points.map(p => ({x: p.villain_pct, y: p.win_pct, name: p.name, total: p.total}));
+      const ctx = document.getElementById('victoryVillainChart');
+      if (!ctx) return;
+      const chart = new Chart(ctx, {
+        type: 'scatter',
+        data: { datasets: [{ label: 'Joueurs', data: dataPoints, pointBackgroundColor: 'rgba(54,162,235,0.9)', pointRadius: 6 }] },
+        options: {
+          scales: {
+            x: { title: { display: true, text: '% parties jouées en Villain' }, min: 0, max: 100 },
+            y: { title: { display: true, text: '% victoires' }, min: 0, max: 100 }
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const d = ctx.raw;
+                  return `${d.name}: ${d.y}% victoires — ${d.x}% Villain (${d.total} parties)`;
+                }
+              }
+            },
+            legend: { display: false }
+          }
+        }
+      });
+    })();
+  </script>
+</div>
   
 <div class="card">
-  <h3>Plus méchant / plus gentil (par participations)</h3>
+  <h3>Plus de fois Villain / Gentil  (par participations)</h3>
   <div style="display:flex; gap:1.5rem; align-items:flex-start;">
     <table style="border-collapse:collapse; width:50%">
       <thead>
-        <tr><th style="text-align:left; padding:6px">#</th><th style="text-align:left; padding:6px">Joueur</th><th style="text-align:right; padding:6px">Méchant</th></tr>
+        <tr><th style="text-align:left; padding:6px">#</th><th style="text-align:left; padding:6px">Joueur</th><th style="text-align:right; padding:6px">Villain</th></tr>
       </thead>
       <tbody>
       {% for p in role_counts_villains %}
@@ -78,10 +115,10 @@
   </table>
 </div>
 <div class="card">
-  <h3>Plus méchant / plus gentil (par victoires)</h3>
+  <h3>Plus de fois Villain / Gentil (par victoires)</h3>
   <div style="display:flex; gap:1.5rem; align-items:flex-start;">
     <table style="border-collapse:collapse; width:50%">
-      <thead><tr><th style="text-align:left;padding:6px">#</th><th style="text-align:left;padding:6px">Joueur</th><th style="text-align:right;padding:6px">Victoires (Méchant)</th></tr></thead>
+      <thead><tr><th style="text-align:left;padding:6px">#</th><th style="text-align:left;padding:6px">Joueur</th><th style="text-align:right;padding:6px">Victoires (Villain)</th></tr></thead>
       <tbody>
       {% for p in win_counts_villains %}
         <tr style="border-top:1px solid #eee"><td style="padding:6px">{{ forloop.counter }}</td><td style="padding:6px">{{ p.name }}</td><td style="padding:6px; text-align:right">{{ p.villain_wins }}</td></tr>
@@ -174,7 +211,7 @@
     </tbody>
   </table>
   </div>
-  <h4>Tableau — Victoires côté Méchant (%)</h4>
+  <h4>Tableau — Victoires côté Villain (%)</h4>
   <div style="overflow:auto;"> 
   <table class="matrix" style="border-collapse:collapse; width:100%;">
     <thead>

@@ -44,10 +44,10 @@
 {% if participants.count > 0 %}
 <div class="card">
   <h3>Phase 2 — Affecter rôle et infos</h3>
-  <p>Définissez les rôles (cocher = Méchant) et les infos, puis cliquez sur <strong>Terminer la partie</strong> — tout sera sauvegardé en une seule fois.</p>
+  <p>Définissez les rôles (cocher = Villain) et les infos, puis cliquez sur <strong>Terminer la partie</strong> — tout sera sauvegardé en une seule fois.</p>
   <form method="post" action="/end_game/{{ game.id }}/">{% csrf_token %}
     <table style="width:100%;border-collapse:collapse">
-      <tr><th>Joueur</th><th>Rôle (cocher = Méchant)</th><th>Info</th></tr>
+      <tr><th>Joueur</th><th>Rôle (cocher = Villain)</th><th>Info</th></tr>
       {% for p in participants %}
         <tr style="border-top:1px solid #eee">
           <td>{{ p.player.name }} <button type="button" class="remove-participant" data-game="{{ game.id }}" data-player="{{ p.player.id }}">Supprimer</button></td>
@@ -64,7 +64,7 @@
      <form method="post" action="/end_game/{{ game.id }}/">{% csrf_token %}
     <label>Rôle gagnant: </label>
     <select name="winner_role">
-      <option value="villain">Méchant</option>
+      <option value="villain">Villain</option>
       <option value="kind">Gentil</option>
     </select>
     <button type="submit">Terminer la partie</button>
