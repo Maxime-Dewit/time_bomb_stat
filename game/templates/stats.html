@@ -33,6 +33,43 @@
       </div>
     </div>
   </div>
+</div>
+<div class="card">
+  <h3>Victoire vs % joué Méchant</h3>
+  <div style="max-width:900px;">
+    <canvas id="victoryVillainChart" height="260"></canvas>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    (function(){
+      const points = {{ players_chart_json|safe }} || [];
+      const dataPoints = points.map(p => ({x: p.villain_pct, y: p.win_pct, name: p.name, total: p.total}));
+      const ctx = document.getElementById('victoryVillainChart');
+      if (!ctx) return;
+      const chart = new Chart(ctx, {
+        type: 'scatter',
+        data: { datasets: [{ label: 'Joueurs', data: dataPoints, pointBackgroundColor: 'rgba(54,162,235,0.9)', pointRadius: 6 }] },
+        options: {
+          scales: {
+            x: { title: { display: true, text: '% parties jouées en Méchant' }, min: 0, max: 100 },
+            y: { title: { display: true, text: '% victoires' }, min: 0, max: 100 }
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const d = ctx.raw;
+                  return `${d.name}: ${d.y}% victoires — ${d.x}% méchant (${d.total} parties)`;
+                }
+              }
+            },
+            legend: { display: false }
+          }
+        }
+      });
+    })();
+  </script>
+</div>
   
 <div class="card">
   <h3>Plus méchant / plus gentil (par participations)</h3>
