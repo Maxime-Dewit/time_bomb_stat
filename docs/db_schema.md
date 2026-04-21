@@ -19,7 +19,7 @@ Ce document décrit les modèles Django et le mappage vers la base de données.
   - `master_id` (FK -> `game_player.id`, nullable) : maître de la partie
   - `started_at` (datetime, nullable) : date/heure de démarrage
   - `ended_at` (datetime, nullable) : date/heure de fin
-  - `winner_role` (varchar(20), choices `villain`/`kind`, nullable) : rôle gagnant (Méchant/Gentil)
+  - `winner_role` (varchar(20), choices `villain`/`kind`, nullable) : rôle gagnant (Villain/Gentil)
 - Usage: chaque enregistrement est une partie de Time Bomb.
 
 ### Participation
@@ -49,7 +49,7 @@ La migration initiale (`game/migrations/0001_initial.py`) crée ces trois tables
 
 ## Remarques
 - Le modèle stocke `winner_role` (le rôle gagnant). Le système compte actuellement une victoire d'un joueur si sa participation a `role == game.winner_role`.
-- Les colonnes `role` et `winner_role` utilisent les valeurs techniques `'villain'` et `'kind'` en base, et les labels humains (`'Méchant'`, `'Gentil'`) sont fournis via `ROLE_CHOICES`.
+- Les colonnes `role` et `winner_role` utilisent les valeurs techniques `'villain'` et `'kind'` en base, et les labels humains (`'Villain'`, `'Gentil'`) sont fournis via `ROLE_CHOICES`.
 
 ## Migration / évolution
 - Pour ajouter un nouveau champ, créer une migration via `python manage.py makemigrations game` puis `python manage.py migrate`.
