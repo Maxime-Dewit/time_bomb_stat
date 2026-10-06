@@ -38,7 +38,7 @@ Toutes filtrables : tout, dernière soirée, 30 jours, une année, un mois.
 
 ## Tester en local avec des parties simulées
 
-Prérequis : Python 3.12+.
+Prérequis : Python 3.11+.
 
 ```bash
 make install       # crée .venv, installe les dépendances, copie .env.example en .env
@@ -96,6 +96,7 @@ Variables d'environnement :
 | `DJANGO_CSRF_TRUSTED_ORIGINS` | `https://stats.example.com` | Origines HTTPS autorisées pour les formulaires |
 | `DATABASE_URL` | `postgres://user:pass@host:5432/timebomb` | Base PostgreSQL |
 | `DJANGO_TIME_ZONE` | `Europe/Paris` | Fuseau pour les dates et les soirées |
+| `DJANGO_HTTPS` | `1` | `0` si le site est servi en HTTP simple (sinon les formulaires échouent en 403) |
 | `DJANGO_SECURE_SSL_REDIRECT` | `1` | Redirection HTTPS (mettre `0` si le proxy le fait déjà) |
 | `DJANGO_SECURE_HSTS_SECONDS` | `0` | HSTS, à activer une fois le HTTPS confirmé |
 

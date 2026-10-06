@@ -2,11 +2,11 @@
 name = "timebomb-stats"
 version = "2.0.0"
 description = "Suivi des parties de Time Bomb et statistiques des joueurs."
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 
 [tool.ruff]
 line-length = 100
-target-version = "py312"
+target-version = "py311"
 extend-exclude = ["game/migrations"]
 
 [tool.ruff.lint]

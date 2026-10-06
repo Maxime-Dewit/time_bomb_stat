@@ -111,16 +111,18 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Sécurité en production (derrière le load balancer GCP qui termine le TLS).
+# Sécurité en production. DJANGO_HTTPS=0 si le site est servi en HTTP simple
+# (sinon les cookies « secure » ne passent pas et les formulaires échouent en 403).
 if not DEBUG:
-    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    SECURE_SSL_REDIRECT = env_bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_REFERRER_POLICY = "same-origin"
-    # À activer (ex. 31536000) une fois le HTTPS confirmé sur tout le domaine.
-    SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_SECURE_HSTS_SECONDS", "0"))
+    if env_bool("DJANGO_HTTPS", default=True):
+        SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+        SECURE_SSL_REDIRECT = env_bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
+        SESSION_COOKIE_SECURE = True
+        CSRF_COOKIE_SECURE = True
+        # À activer (ex. 31536000) une fois le HTTPS confirmé sur tout le domaine.
+        SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_SECURE_HSTS_SECONDS", "0"))
 
 LOGGING = {
     "version": 1,
