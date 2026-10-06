@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.db.models import Count, Q, F, Case, When, Value, FloatField
 from django.db.models.functions import Round
 import logging
+import json
 from .models import Player, Game, Participation, INFO_VALUES
 
 logger = logging.getLogger(__name__)
@@ -269,6 +270,32 @@ def stats(request):
     info_counts_pire = Player.objects.annotate(pire_count=Count('participations', filter=Q(participations__info='pire'))).order_by('-pire_count')[:20]
     info_counts_meilleur = Player.objects.annotate(meilleur_count=Count('participations', filter=Q(participations__info='meilleur'))).order_by('-meilleur_count')[:20]
 
+    # Prepare scatter plot data: x = % games played as villain, y = % wins (both per player)
+    players_stats_qs = Player.objects.annotate(
+        villains=Count('participations', filter=Q(participations__role='villain')),
+        total=Count('participations')
+    ).order_by('name')
+
+    # build map of wins_count from 'wins' queryset (which already contains wins_count as a numeric percent)
+    wins_map = {p.id: getattr(p, 'win_count', 0) for p in wins}
+
+    chart_points = []
+    for p in players_stats_qs:
+        total = p.total or 0
+        villain_pct = round(p.villains / total * 100, 1) if total > 0 else 0
+        # wins_map stores raw win_count (number of wins); compute win % relative to total
+        wins_num = wins_map.get(p.id, 0)
+        win_pct = round(wins_num / total * 100, 1) if total > 0 else 0
+        chart_points.append({
+            'id': p.id,
+            'name': p.name,
+            'villain_pct': villain_pct,
+            'win_pct': win_pct,
+            'total': total,
+        })
+
+    players_chart_json = json.dumps(chart_points, ensure_ascii=False)
+
     return render(request, 'stats.html', {
         'wins': wins,
         'role_counts_villains': role_counts_villains,
@@ -287,6 +314,7 @@ def stats(request):
         'win_counts_kinds': win_counts_kinds,
         'info_counts_pire': info_counts_pire,
         'info_counts_meilleur': info_counts_meilleur,
+        'players_chart_json': players_chart_json,
     })
 
 

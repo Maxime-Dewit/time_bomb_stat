@@ -3,7 +3,7 @@ from django.db import models
 
 # rôle possible dans une partie
 ROLE_CHOICES = (
-    ('villain', 'Méchant'),
+    ('villain', 'Villain'),
     ('kind', 'Gentil'),
 )
 

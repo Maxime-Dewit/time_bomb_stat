@@ -78,5 +78,5 @@ python manage.py runserver
 4. Aller sur http://127.0.0.1:8000/ pour l'interface joueur/maître du jeu et http://127.0.0.1:8000/stats/ pour les statistiques.
 
 Notes:
-- L'application permet de créer/join des parties; un maître du jeu peut démarrer/arrêter une partie. Les participants peuvent renseigner leur rôle (méchant/gentil) et informations de la partie.
-- Les pages de statistiques listent victoires par joueur, qui est le plus souvent méchant/gentil, combinaisons fréquentes et stats individuelles.
+- L'application permet de créer/join des parties; un maître du jeu peut démarrer/arrêter une partie. Les participants peuvent renseigner leur rôle (villain/gentil) et informations de la partie.
+- Les pages de statistiques listent victoires par joueur, qui est le plus souvent villain/gentil, combinaisons fréquentes et stats individuelles.

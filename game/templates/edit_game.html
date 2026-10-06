@@ -16,7 +16,7 @@
       {% endfor %}
     </select>
     <select name="role">
-      <option value="villain">Méchant</option>
+      <option value="villain">Villain</option>
       <option value="kind">Gentil</option>
     </select>
     <select name="info">
@@ -33,7 +33,7 @@
   <form method="post">{% csrf_token %}
     <input type="hidden" name="action" value="set_roles">
     <table style="width:100%;border-collapse:collapse">
-      <tr><th>Joueur</th><th>Rôle (cocher = Méchant)</th><th>Info</th><th>Supprimer</th></tr>
+      <tr><th>Joueur</th><th>Rôle (cocher = Villain)</th><th>Info</th><th>Supprimer</th></tr>
       {% for p in participants %}
         <tr style="border-top:1px solid #eee">
           <td>{{ p.player.name }}</td>
@@ -56,7 +56,7 @@
       <label>Rôle gagnant: </label>
       <select name="winner_role">
         <option value="">(non défini)</option>
-        <option value="villain" {% if game.winner_role == 'villain' %}selected{% endif %}>Méchant</option>
+        <option value="villain" {% if game.winner_role == 'villain' %}selected{% endif %}>Villain</option>
         <option value="kind" {% if game.winner_role == 'kind' %}selected{% endif %}>Gentil</option>
       </select>
       <button type="submit">Enregistrer les changements</button>
