@@ -43,18 +43,44 @@
   <script>
     (function(){
       const points = {{ players_chart_json|safe }} || [];
-      const dataPoints = points.map(p => ({x: p.villain_pct, y: p.win_pct, name: p.name, total: p.total}));
+      if (!points.length) return;
+      // compute bounds with small padding
+      const xs = points.map(p => p.villain_pct);
+      const ys = points.map(p => p.win_pct);
+      const xmin = Math.max(0, Math.min(...xs) - 5);
+      const xmax = Math.min(100, Math.max(...xs) + 5);
+      const ymin = Math.max(0, Math.min(...ys) - 5);
+      const ymax = Math.min(100, Math.max(...ys) + 5);
+
+      // prepare bubble data and colors
+      const data = points.map((p, i) => {
+        const hue = Math.round((i * 137.508) % 360);
+        const color = `hsl(${hue} 70% 50%)`;
+        // radius scaled from total (sqrt scaling)
+        const r = Math.max(4, Math.round(Math.sqrt(p.total || 1) * 2));
+        return { x: p.villain_pct, y: p.win_pct, r: r, name: p.name, total: p.total, bg: color };
+      });
+
       const ctx = document.getElementById('victoryVillainChart');
       if (!ctx) return;
       const chart = new Chart(ctx, {
-        type: 'scatter',
-        data: { datasets: [{ label: 'Joueurs', data: dataPoints, pointBackgroundColor: 'rgba(54,162,235,0.9)', pointRadius: 6 }] },
+        type: 'bubble',
+        data: {
+          datasets: [{
+            label: 'Joueurs',
+            data: data,
+            backgroundColor: data.map(d=>d.bg),
+            borderColor: data.map(d=>d.bg),
+            borderWidth: 1
+          }]
+        },
         options: {
           scales: {
-            x: { title: { display: true, text: '% parties jouées en Villain' }, min: 0, max: 100 },
-            y: { title: { display: true, text: '% victoires' }, min: 0, max: 100 }
+            x: { title: { display: true, text: '% parties jouées en Villain' }, min: xmin, max: xmax },
+            y: { title: { display: true, text: '% victoires' }, min: ymin, max: ymax }
           },
           plugins: {
+            legend: { display: true, position: 'bottom' },
             tooltip: {
               callbacks: {
                 label: (ctx) => {
@@ -62,8 +88,7 @@
                   return `${d.name}: ${d.y}% victoires — ${d.x}% Villain (${d.total} parties)`;
                 }
               }
-            },
-            legend: { display: false }
+            }
           }
         }
       });
