@@ -1,0 +1,130 @@
+{% extends "game/base.html" %}
+{% load game_extras %}
+{% block title %}Accueil{% endblock %}
+
+{% block content %}
+<section class="card card--hero" style="margin-bottom:20px">
+  <div class="row row--between" style="align-items:flex-end; gap:20px">
+    <div>
+      <span class="eyebrow">💣 Time Bomb</span>
+      <h1>Qui coupe le bon fil&nbsp;?</h1>
+      <p class="muted" style="margin-top:8px; max-width:56ch">
+        Enregistre chaque partie — qui était gentil, qui était méchant, qui a gagné —
+        et regarde les stats tomber : classements, duos, rivalités, records.
+      </p>
+    </div>
+    <div class="row">
+      {% if last_game %}
+      <form method="post" action="{% url 'game:game_rematch' last_game.pk %}" class="inline">
+        {% csrf_token %}
+        <button class="btn btn--lg" type="submit" title="Mêmes joueurs que la partie #{{ last_game.pk }}">🔁 Rejouer avec la même table</button>
+      </form>
+      {% endif %}
+      <form method="post" action="{% url 'game:game_create' %}" class="inline">
+        {% csrf_token %}
+        <button class="btn btn--primary btn--lg" type="submit">💣 Nouvelle partie</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+{% if active_games %}
+<section class="card card--flush" style="margin-bottom:20px">
+  <div class="card__head">
+    <div><h2>Parties en cours</h2><p>À terminer pour qu'elles comptent dans les stats.</p></div>
+  </div>
+  {% for game in active_games %}{% include "game/partials/game_item.html" %}{% endfor %}
+</section>
+{% endif %}
+
+<section class="kpis" style="margin-bottom:20px">
+  <div class="kpi">
+    <div class="kpi__label">Parties jouées</div>
+    <div class="kpi__value num">{{ overview.games }}</div>
+    <div class="kpi__hint">sur {{ overview.sessions }} soirée{{ overview.sessions|pluralize }}</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi__label">Joueurs</div>
+    <div class="kpi__value num">{{ overview.players }}</div>
+    <div class="kpi__hint">{% if overview.avg_size %}{{ overview.avg_size }} par table en moyenne{% else %}—{% endif %}</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi__label">Gentils vs méchants</div>
+    <div class="kpi__value num"><span class="kind-ink">{{ overview.kind_wins }}</span> <span class="muted">–</span> <span class="villain-ink">{{ overview.villain_wins }}</span></div>
+    <div class="split" style="margin-top:10px" role="img" aria-label="Gentils {{ overview.kind_pct|pct }}, méchants {{ overview.villain_pct|pct }}">
+      {% if overview.games %}<span class="k" style="width:{{ overview.kind_pct|css }}%"></span><span class="v" style="flex:1"></span>{% endif %}
+    </div>
+  </div>
+  <div class="kpi">
+    <div class="kpi__label">Durée moyenne</div>
+    <div class="kpi__value num">{% if overview.avg_minutes %}{{ overview.avg_minutes }}<small style="font-size:1rem"> min</small>{% else %}—{% endif %}</div>
+    <div class="kpi__hint">{% if overview.games_per_session %}{{ overview.games_per_session }} parties par soirée{% endif %}</div>
+  </div>
+</section>
+
+<div class="grid grid-2">
+  <section class="card">
+    <div class="card__head">
+      <div><h2>Podium — {{ month_label|lower }}</h2><p>Meilleur % de victoires ce mois-ci</p></div>
+      <a class="btn btn--sm btn--ghost" href="{% url 'game:stats' %}?p=m{{ today|date:'Y-m' }}">Tout le mois →</a>
+    </div>
+    {% if month_podium %}
+      <div class="podium">
+        {% for line in month_podium %}
+        <div class="podium__step podium__step--{{ forloop.counter }}">
+          <span class="medal" aria-hidden="true">{% cycle '🥇' '🥈' '🥉' %}</span>
+          {% avatar line.player 'lg' %}
+          <a class="podium__name" href="{{ line.player.get_absolute_url }}">{{ line.player.name }}</a>
+          <div class="podium__block"><strong>{{ line.win_pct|pct }}</strong><small>{{ line.wins }}/{{ line.games }}</small></div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty"><span class="empty__icon">🏁</span>Pas encore de partie ce mois-ci.</div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    {% if last_session %}
+      <div class="card__head">
+        <div><h2>Dernière soirée</h2><p>{{ last_session.start|date:"l j F Y"|capfirst }}</p></div>
+        <a class="btn btn--sm btn--ghost" href="{% url 'game:stats_session' last_session.start|date:'Y-m-d' %}">Le détail →</a>
+      </div>
+      <div class="grid grid-2" style="gap:14px">
+        <div>
+          <div class="kpi__label">Roi de la soirée</div>
+          <div class="stack" style="gap:8px; margin-top:10px">
+            {% for c in last_session.champions %}{% player_chip c.player %}{% endfor %}
+          </div>
+          <p class="muted small" style="margin-top:6px">{{ last_session.champion_wins }} victoire{{ last_session.champion_wins|pluralize }}</p>
+        </div>
+        <div>
+          <div class="kpi__label">Score de la soirée</div>
+          <div class="kpi__value num"><span class="kind-ink">{{ last_session.kind_wins }}</span> <span class="muted">–</span> <span class="villain-ink">{{ last_session.villain_wins }}</span></div>
+          <p class="muted small">{{ last_session.games }} parties · {{ last_session.players }} joueurs</p>
+        </div>
+      </div>
+      {% if last_session.mvps %}
+      <p style="margin-top:16px" class="row small">⭐ MVP :
+        {% for m in last_session.mvps %}<strong>{{ m.player.name }}</strong> <span class="muted">×{{ m.best }}</span>{% if not forloop.last %},{% endif %}{% endfor %}
+      </p>
+      {% endif %}
+    {% else %}
+      <div class="empty"><span class="empty__icon">🌙</span>Aucune soirée enregistrée pour l'instant.<br>
+        <span class="small">Astuce : <code>make demo</code> génère des parties simulées.</span></div>
+    {% endif %}
+  </section>
+
+  <section class="card card--flush span-all">
+    <div class="card__head">
+      <div><h2>Dernières parties</h2></div>
+      <a class="btn btn--sm btn--ghost" href="{% url 'game:game_list' %}">Tout l'historique →</a>
+    </div>
+    {% for game in recent_games %}
+      {% include "game/partials/game_item.html" %}
+    {% empty %}
+      <div class="empty">Aucune partie terminée.</div>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

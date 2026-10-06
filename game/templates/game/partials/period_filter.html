@@ -1,0 +1,30 @@
+<form method="get" class="filters" {% if compact %}style="margin-bottom:0"{% endif %} aria-label="Période">
+  {% for key, value in request.GET.items %}{% if key != "p" and key != "min" and key != "page" %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}{% endfor %}
+  <a class="chip" href="{% querystring p='all' %}" {% if period.key == 'all' %}aria-current="true"{% endif %}>Tout</a>
+  {% if last_day %}<a class="chip" href="{% querystring p='last' %}" {% if period.is_day and period.start == last_day %}aria-current="true"{% endif %}>Dernière soirée</a>{% endif %}
+  <a class="chip" href="{% querystring p='30d' %}" {% if period.key == '30d' %}aria-current="true"{% endif %}>30 jours</a>
+  {% for key, y in years %}
+    <a class="chip" href="{% querystring p=key %}" {% if period.key == key %}aria-current="true"{% endif %}>{{ y }}</a>
+  {% endfor %}
+  {% if months %}
+  <label class="chip chip--select" {% if period.key|slice:":1" == 'm' %}aria-current="true"{% endif %}>
+    <span class="sr-only">Mois</span>
+    <select name="p" data-autosubmit>
+      {% if period.key|slice:":1" != 'm' %}<option value="{{ period.key }}" selected>Mois…</option>{% endif %}
+      {% for key, label in months %}<option value="{{ key }}" {% if period.key == key %}selected{% endif %}>{{ label|capfirst }}</option>{% endfor %}
+    </select>
+  </label>
+  {% endif %}
+  {% if not compact %}
+  <span class="sep" aria-hidden="true"></span>
+  <label class="chip chip--select" title="Nombre minimum de parties pour apparaître dans les classements en %">
+    <span>Min.</span>
+    <select name="min" data-autosubmit>
+      {% for n in min_choices %}<option value="{{ n }}" {% if n == min_games %}selected{% endif %}>{{ n }} partie{{ n|pluralize }}</option>{% endfor %}
+    </select>
+  </label>
+  {% else %}
+  <input type="hidden" name="min" value="{{ min_games }}">
+  {% endif %}
+  <noscript><button class="btn btn--sm" type="submit">OK</button></noscript>
+</form>

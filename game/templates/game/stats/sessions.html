@@ -1,0 +1,35 @@
+{% extends "game/stats/base.html" %}
+{% load game_extras %}
+{% block title %}Soirées{% endblock %}
+{% block heading %}Les soirées{% endblock %}
+{% block intro %}<p>Une soirée regroupe les parties d'une même session de jeu (une partie après minuit compte pour la veille).</p>{% endblock %}
+
+{% block stats %}
+<div class="stack">
+  <section class="card">
+    <div class="card__head"><div><h2>Calendrier</h2><p>{{ calendar.total_days }} soirée{{ calendar.total_days|pluralize }} · clique sur une case pour voir la soirée</p></div></div>
+    <div class="calendar" role="grid" aria-label="Calendrier des soirées">
+      {% for week in calendar.weeks %}
+      <div class="calendar__week">
+        <span class="calendar__month">{{ week.label }}</span>
+        {% for d in week.days %}
+          {% if d.count %}
+            <a class="calendar__day" data-l="{{ d.level }}" href="{% url 'game:stats_session' d.date|date:'Y-m-d' %}" title="{{ d.date|date:'l j F Y'|capfirst }} : {{ d.count }} partie{{ d.count|pluralize }}"><span class="sr-only">{{ d.date|date:'j F' }}, {{ d.count }} parties</span></a>
+          {% else %}
+            <span class="calendar__day {% if d.out %}calendar__day--out{% endif %}" title="{{ d.date|date:'j F Y' }}"></span>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="calendar-legend">Moins <span class="calendar__day"></span><span class="calendar__day" data-l="1"></span><span class="calendar__day" data-l="2"></span><span class="calendar__day" data-l="3"></span><span class="calendar__day" data-l="4"></span> Plus <span style="margin-left:6px">(max {{ calendar.peak }} parties)</span></div>
+  </section>
+
+  <section class="card card--flush">
+    <div class="card__head"><div><h2>Toutes les soirées</h2><p>Le roi de la soirée est celui qui a le plus de victoires</p></div></div>
+    <div class="timeline-list">
+      {% for s in sessions %}{% include "game/partials/period_row.html" %}{% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

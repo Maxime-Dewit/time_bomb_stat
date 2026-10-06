@@ -1,0 +1,32 @@
+{% load game_extras %}
+<a class="game-item" href="{% if game.is_active %}{% url 'game:game_manage' game.pk %}{% else %}{{ game.get_absolute_url }}{% endif %}">
+  {% if game.is_active %}
+    <span class="game-item__badge game-item__badge--live" aria-hidden="true">⏳</span>
+  {% elif game.winner_role == 'villain' %}
+    <span class="game-item__badge game-item__badge--villain" aria-hidden="true">💥</span>
+  {% else %}
+    <span class="game-item__badge game-item__badge--kind" aria-hidden="true">🛡️</span>
+  {% endif %}
+  <div style="min-width:0">
+    <div class="row" style="gap:8px">
+      <strong>Partie #{{ game.pk }}</strong>
+      {% if game.is_active %}<span class="pill pill--live">En cours</span>
+      {% elif game.winner_role %}<span class="pill pill--{{ game.winner_role }}">Victoire des {{ game.get_winner_role_display|lower }}s</span>{% endif %}
+    </div>
+    <div class="game-item__teams">
+      {% regroup game.participations.all|dictsort:"role" by role as teams %}
+      {% for team in teams %}
+        <span class="team-names {% if team.grouper == game.winner_role %}won{% endif %}">
+          <span class="dot dot--{{ team.grouper }}" aria-hidden="true"></span>
+          {% for p in team.list %}{{ p.player.name }}{% if p.info == 'meilleur' %} ⭐{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
+        </span>
+      {% empty %}
+        <span>Aucun joueur pour l'instant</span>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="muted small num" style="text-align:right">
+    {% if game.started_at %}{{ game.started_at|date:"H:i" }}{% endif %}
+    {% if game.duration %}<br>{{ game.duration|minutes }}{% endif %}
+  </div>
+</a>

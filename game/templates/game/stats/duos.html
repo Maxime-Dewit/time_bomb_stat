@@ -1,0 +1,81 @@
+{% extends "game/stats/base.html" %}
+{% load game_extras %}
+{% block title %}Duos & rivalités{% endblock %}
+{% block heading %}Duos & rivalités{% endblock %}
+
+{% block stats %}
+<div class="grid grid-2">
+  <section class="card">
+    <div class="card__head"><div><h2>🤝 Duos de choc</h2><p>Meilleur % de victoire quand ils sont dans la même équipe (≥ {{ pair_min }} parties)</p></div></div>
+    {% include "game/partials/pair_list.html" with pairs=best_duos metric="same" %}
+  </section>
+  <section class="card">
+    <div class="card__head"><div><h2>💔 Duos maudits</h2><p>Ensemble… ils perdent</p></div></div>
+    {% include "game/partials/pair_list.html" with pairs=worst_duos metric="same" %}
+  </section>
+  <section class="card">
+    <div class="card__head"><div><h2>😈 Duos de méchants</h2><p>% de victoire quand les deux sont méchants</p></div></div>
+    {% include "game/partials/pair_list.html" with pairs=villain_duos metric="villain" %}
+  </section>
+  <section class="card">
+    <div class="card__head"><div><h2>🛡️ Duos de gentils</h2><p>% de victoire quand les deux sont gentils</p></div></div>
+    {% include "game/partials/pair_list.html" with pairs=kind_duos metric="kind" %}
+  </section>
+
+  <section class="card">
+    <div class="card__head"><div><h2>⚔️ Rivalités</h2><p>Les face-à-face les plus déséquilibrés (camps opposés, ≥ {{ pair_min }} parties)</p></div></div>
+    {% if rivalries %}
+    <div class="stack" style="gap:12px">
+      {% for p in rivalries %}
+      <div>
+        <div class="row row--between small" style="flex-wrap:nowrap">
+          <span class="row" style="gap:6px; flex-wrap:nowrap">{% avatar p.a 'xs' %}<strong>{{ p.a.name }}</strong></span>
+          <span class="muted">{{ p.opposed }} duels</span>
+          <span class="row" style="gap:6px; flex-wrap:nowrap"><strong>{{ p.b.name }}</strong>{% avatar p.b 'xs' %}</span>
+        </div>
+        <div class="split" style="margin-top:6px; --kind: var(--accent)"><span class="k" style="width:{{ p.a_vs_b_pct|css }}%"></span><span class="v" style="flex:1; background:var(--surface-3)"></span></div>
+        <div class="split-legend small"><span><strong>{{ p.a_wins_opposed }}</strong> victoires</span><span><strong>{{ p.b_wins_opposed }}</strong> victoires</span></div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}<div class="empty small">Pas assez de duels.</div>{% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card__head"><div><h2>👯 Inséparables</h2><p>Ceux qui ont le plus joué ensemble</p></div></div>
+    {% include "game/partials/pair_list.html" with pairs=frequent metric="together" max=frequent.0.together %}
+  </section>
+
+  <section class="card span-all">
+    <div class="card__head">
+      <div><h2>Matrice des duos</h2><p>Ligne = joueur, colonne = partenaire. Survole une case pour le détail.</p></div>
+      <div class="row" data-matrix-switch role="group" aria-label="Mode de la matrice">
+        <button class="chip" type="button" data-mode="same" aria-pressed="true">🤝 Même équipe</button>
+        <button class="chip" type="button" data-mode="vs" aria-pressed="false">⚔️ Face à face</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="matrix" data-matrix>
+        <thead><tr><th></th>{% for p in matrix.players %}<th scope="col">{{ p.name }}</th>{% endfor %}</tr></thead>
+        <tbody>
+          {% for row in matrix.rows %}
+          <tr>
+            <th scope="row">{{ row.player.name }}</th>
+            {% for c in row.cells %}
+              {% if c is None %}<td class="self"></td>
+              {% else %}
+              <td class="heat {% if c.same is None %}none{% endif %}"
+                  data-same="{{ c.same|default_if_none:''|css }}" data-n-same="{{ c.n_same }}"
+                  data-vs="{{ c.vs|default_if_none:''|css }}" data-n-vs="{{ c.n_vs }}"
+                  data-side="{{ c.same|heat_side }}" style="{{ c.same|heat_style }}">{% if c.same is None %}·{% else %}{{ c.same|floatformat:0 }}{% endif %}</td>
+              {% endif %}
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="matrix-legend" style="margin-top:12px"><span>0 %</span><span class="ramp" aria-hidden="true"></span><span>100 %</span><span>· 50 % = neutre (gris)</span></div>
+  </section>
+</div>
+{% endblock %}

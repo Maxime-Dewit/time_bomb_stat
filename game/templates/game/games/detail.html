@@ -1,0 +1,52 @@
+{% extends "game/base.html" %}
+{% load game_extras %}
+{% block title %}Partie #{{ game.pk }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <span class="eyebrow">{% if session_day %}<a href="{% url 'game:stats_session' session_day|date:'Y-m-d' %}">Soirée du {{ session_day|date:"j F Y" }}</a>{% endif %}</span>
+    <h1>Partie #{{ game.pk }}
+      {% if game.is_active %}<span class="pill pill--live" style="vertical-align:middle">En cours</span>{% endif %}
+    </h1>
+    <p>
+      {% if game.started_at %}Commencée à {{ game.started_at|date:"H:i" }}{% endif %}
+      {% if game.duration %} · durée {{ game.duration|minutes }}{% endif %}
+      {% if game.master %} · maître du jeu : <a href="{{ game.master.get_absolute_url }}"><strong>{{ game.master.name }}</strong></a>{% endif %}
+    </p>
+  </div>
+  <div class="row">
+    <a class="btn" href="{% url 'game:game_manage' game.pk %}">✏️ Modifier</a>
+    <form method="post" action="{% url 'game:game_rematch' game.pk %}" class="inline">
+      {% csrf_token %}<button class="btn btn--primary" type="submit">🔁 Revanche</button>
+    </form>
+  </div>
+</div>
+
+<div class="teams">
+  {% for team in teams %}
+  <section class="team team--{{ team.role }} {% if team.won %}team--won{% endif %}">
+    <h2>{% if team.role == 'kind' %}🛡️ Les gentils{% else %}😈 Les méchants{% endif %}</h2>
+    <p class="muted small">{{ team.members|length }} joueur{{ team.members|length|pluralize }}</p>
+    <ul>
+      {% for p in team.members %}
+      <li>
+        {% player_chip p.player %}
+        {% if p.info == 'meilleur' %}<span class="pill pill--accent">⭐ Meilleur joueur</span>
+        {% elif p.info == 'pire' %}<span class="pill">🫠 Pire joueur</span>{% endif %}
+      </li>
+      {% empty %}
+      <li class="muted">Personne</li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endfor %}
+</div>
+
+<div class="row" style="margin-top:28px; justify-content:space-between">
+  <a class="btn btn--ghost" href="{% url 'game:game_list' %}">← Toutes les parties</a>
+  <form method="post" action="{% url 'game:game_delete' game.pk %}" class="inline" data-confirm="Supprimer définitivement la partie #{{ game.pk }} ?">
+    {% csrf_token %}<button class="btn btn--sm btn--danger" type="submit">Supprimer la partie</button>
+  </form>
+</div>
+{% endblock %}

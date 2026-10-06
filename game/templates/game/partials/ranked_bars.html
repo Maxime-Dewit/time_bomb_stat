@@ -1,0 +1,12 @@
+{% load game_extras %}
+{% if lines %}
+<div class="bars">
+  {% for item in lines %}
+  <div class="bars__row">
+    {% player_chip item.line.player %}
+    <div class="bars__track"><div class="bars__fill {{ fill }}" style="width:{{ item.value|bar:lines.0.value|css }}%"></div></div>
+    <span class="bars__value">{{ item.display }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% else %}<div class="empty small">Rien à signaler.</div>{% endif %}

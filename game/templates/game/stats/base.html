@@ -1,0 +1,31 @@
+{% extends "game/base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <span class="eyebrow">Statistiques · {{ period.label }}</span>
+    <h1>{% block heading %}{% endblock %}</h1>
+    {% block intro %}{% endblock %}
+  </div>
+</div>
+
+{% with name=request.resolver_match.url_name %}
+<nav class="tabs" aria-label="Sections des statistiques">
+  <a href="{% url 'game:stats' %}?{{ querystring }}" {% if name == 'stats' %}aria-current="page"{% endif %}>📊 Vue d'ensemble</a>
+  <a href="{% url 'game:stats_evolution' %}?{{ querystring }}" {% if name == 'stats_evolution' %}aria-current="page"{% endif %}>📈 Évolution & palmarès</a>
+  <a href="{% url 'game:stats_duos' %}?{{ querystring }}" {% if name == 'stats_duos' %}aria-current="page"{% endif %}>🤝 Duos & rivalités</a>
+  <a href="{% url 'game:stats_records' %}?{{ querystring }}" {% if name == 'stats_records' %}aria-current="page"{% endif %}>🏅 Records</a>
+  <a href="{% url 'game:stats_sessions' %}?{{ querystring }}" {% if name == 'stats_sessions' or name == 'stats_session' %}aria-current="page"{% endif %}>🌙 Soirées</a>
+</nav>
+{% endwith %}
+
+{% block filters %}{% include "game/partials/period_filter.html" %}{% endblock %}
+
+{% if engine.is_empty %}
+  <div class="card empty"><span class="empty__icon">📭</span>Aucune partie terminée sur cette période.
+    <span class="small">Change de période, ou lance <code>make demo</code> pour générer des parties simulées.</span></div>
+{% else %}
+  {% block stats %}{% endblock %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}{% include "game/partials/chartjs.html" %}{% endblock %}

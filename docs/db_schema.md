@@ -1,59 +1,52 @@
-# Schéma de la base de données — Time Bomb
+# Schéma de la base de données
 
-Ce document décrit les modèles Django et le mappage vers la base de données.
+Trois tables, préfixées `game_`.
 
-## Modèles
+```text
+game_player 1───n game_participation n───1 game_game
+     │                                         │
+     └──────────────── master (0..1) ──────────┘
+```
 
-### Player
-- Table: `game_player`
-- Champs:
-  - `id` (BigAutoField, PK)
-  - `name` (varchar(150), unique)
-  - `created_at` (datetime, auto_now_add)
-- Usage: représente un joueur enregistré dans l'application.
+## `game_player` — `Player`
 
-### Game
-- Table: `game_game`
-- Champs:
-  - `id` (BigAutoField, PK)
-  - `master_id` (FK -> `game_player.id`, nullable) : maître de la partie
-  - `started_at` (datetime, nullable) : date/heure de démarrage
-  - `ended_at` (datetime, nullable) : date/heure de fin
-  - `winner_role` (varchar(20), choices `villain`/`kind`, nullable) : rôle gagnant (Villain/Gentil)
-- Usage: chaque enregistrement est une partie de Time Bomb.
+| Colonne | Type | Notes |
+|---|---|---|
+| `id` | bigint, PK | |
+| `name` | varchar(150), unique | Nom affiché |
+| `created_at` | datetime | Auto |
 
-### Participation
-- Table: `game_participation`
-- Champs:
-  - `id` (BigAutoField, PK)
-  - `player_id` (FK -> `game_player.id`) : joueur
-  - `game_id` (FK -> `game_game.id`) : partie
-  - `role` (varchar(20), choices `villain`/`kind`) : rôle joué dans la partie
-  - `info` (text, blank) : informations supplémentaires (optionnel)
-  - `created_at` (datetime, auto_now_add)
-- Contraintes: `unique_together = ('player','game')` (un joueur ne peut avoir qu'une participation par partie)
+## `game_game` — `Game`
 
-## Extraits de migration
-La migration initiale (`game/migrations/0001_initial.py`) crée ces trois tables et les relations décrites ci-dessus.
+| Colonne | Type | Notes |
+|---|---|---|
+| `id` | bigint, PK | |
+| `master_id` | FK → `game_player`, nullable | Maître du jeu (facultatif) |
+| `started_at` | datetime, nullable, indexé | Début de la partie |
+| `ended_at` | datetime, nullable | Fin ; `NULL` = partie en cours |
+| `winner_role` | varchar(20), nullable | `kind` (gentils) ou `villain` (méchants) |
 
-## Requêtes importantes (exemples)
-- Joueurs n'ayant pas participé à une partie `g` :
-  SELECT * FROM game_player p WHERE NOT EXISTS (
-    SELECT 1 FROM game_participation pp WHERE pp.player_id = p.id AND pp.game_id = <g.id>
-  );
+Seules les parties avec `started_at`, `ended_at` **et** `winner_role` renseignés comptent
+dans les statistiques (`Game.objects.finished()`).
 
-- Compter victoires d'un joueur par rôle (ORM):
-  Player.objects.annotate(wins_count=Count('participations', filter=Q(participations__game__winner_role=F('participations__role'))))
+## `game_participation` — `Participation`
 
-- Paires fréquentes (raw SQL utilisé dans `views.stats`): compter parties jouées ensemble et victoires par côté.
+| Colonne | Type | Notes |
+|---|---|---|
+| `id` | bigint, PK | |
+| `player_id` | FK → `game_player` | Suppression en cascade |
+| `game_id` | FK → `game_game` | Suppression en cascade |
+| `role` | varchar(20) | `kind` ou `villain` |
+| `info` | varchar(20) | Distinction : `meilleur`, `neutre` (défaut) ou `pire` |
+| `created_at` | datetime | Auto |
 
-## Remarques
-- Le modèle stocke `winner_role` (le rôle gagnant). Le système compte actuellement une victoire d'un joueur si sa participation a `role == game.winner_role`.
-- Les colonnes `role` et `winner_role` utilisent les valeurs techniques `'villain'` et `'kind'` en base, et les labels humains (`'Villain'`, `'Gentil'`) sont fournis via `ROLE_CHOICES`.
+Contrainte `unique_player_per_game` sur (`player_id`, `game_id`).
 
-## Migration / évolution
-- Pour ajouter un nouveau champ, créer une migration via `python manage.py makemigrations game` puis `python manage.py migrate`.
-- Pour modifications structurelles en production, appliquez des sauvegardes et exécutez les migrations dans une fenêtre de maintenance.
+Un joueur **gagne** une partie quand `participation.role == game.winner_role`.
 
----
-Fichier généré automatiquement par l'outil d'assistance — ajustez si nécessaire.
+## Calcul des statistiques
+
+Les statistiques ne sont pas stockées : `game/stats/records.py` charge toutes les parties
+terminées de la période en deux requêtes, puis `StatsEngine` (`game/stats/engine.py`)
+calcule tout en mémoire. Pour quelques milliers de parties, une page se calcule en
+quelques dizaines de millisecondes.

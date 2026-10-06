@@ -1,0 +1,1 @@
+{% load game_extras %}<a class="player-chip" href="{{ player.get_absolute_url }}">{% avatar player 'sm' %}<span class="name">{{ player.name }}</span>{% if extra %}<span class="muted small">{{ extra }}</span>{% endif %}</a>

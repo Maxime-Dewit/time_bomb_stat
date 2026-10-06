@@ -1,0 +1,53 @@
+{% extends "game/stats/base.html" %}
+{% load game_extras %}
+{% block title %}Records{% endblock %}
+{% block heading %}Records & distinctions{% endblock %}
+
+{% block stats %}
+<div class="stack">
+  <section class="grid grid-4">
+    {% for r in records %}
+    <div class="card record">
+      <span class="record__icon" aria-hidden="true">{{ r.icon }}</span>
+      <span class="record__title">{{ r.title }}</span>
+      <span class="record__value num">{{ r.value }} <small>{{ r.unit }}</small></span>
+      <div class="row" style="gap:6px">
+        {% for p in r.who %}{% player_chip p %}{% endfor %}
+        {% if r.tone|slice:":5" == "link:" %}<a class="small" href="{% url 'game:stats_session' r.tone|slice:'5:' %}">{{ r.detail }} →</a>
+        {% elif r.tone|slice:":5" == "game:" %}<a class="small" href="{% url 'game:game_detail' r.tone|slice:'5:' %}">{{ r.detail }} →</a>
+        {% elif r.detail %}<span class="small muted">{{ r.detail }}</span>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+
+  <div class="grid grid-2">
+    <section class="card">
+      <div class="card__head"><div><h2>⭐ Meilleurs joueurs (MVP)</h2><p>Nombre de fois désigné meilleur joueur</p></div></div>
+      {% include "game/partials/ranked_bars.html" with lines=mvps fill="" %}
+    </section>
+    <section class="card">
+      <div class="card__head"><div><h2>⭐ Taux de MVP</h2><p>% des parties où il est désigné meilleur (≥ {{ min_games }} parties)</p></div></div>
+      {% include "game/partials/ranked_bars.html" with lines=mvp_rate fill="" %}
+    </section>
+    <section class="card">
+      <div class="card__head"><div><h2>🫠 Pires joueurs</h2><p>Nombre de fois désigné pire joueur</p></div></div>
+      {% include "game/partials/ranked_bars.html" with lines=worsts fill="bars__fill--muted" %}
+    </section>
+    <section class="card">
+      <div class="card__head"><div><h2>🔥 Plus longues séries</h2><p>Victoires d'affilée (record personnel)</p></div></div>
+      {% include "game/partials/ranked_bars.html" with lines=streaks fill="" %}
+    </section>
+    <section class="card span-all">
+      <div class="card__head"><div><h2>En ce moment</h2><p>Séries en cours (au moins 2 parties)</p></div></div>
+      {% if current %}
+      <div class="row" style="gap:10px">
+        {% for line in current %}
+          <span class="pill {% if line.current_streak > 0 %}pill--accent{% endif %}" style="padding:6px 12px 6px 6px">{% avatar line.player 'xs' %} {{ line.player.name }} · {% if line.current_streak > 0 %}🔥 {{ line.current_streak }} victoires{% else %}🧊 {{ line.current_streak|cut:'-' }} défaites{% endif %}</span>
+        {% endfor %}
+      </div>
+      {% else %}<div class="empty small">Aucune série en cours.</div>{% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

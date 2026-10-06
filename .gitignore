@@ -1,2 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
 .venv/
+.ruff_cache/
+
+# Django
 db.sqlite3
+db.sqlite3-journal
+staticfiles/
+.env
+
+# Éditeurs / OS
+.DS_Store
+.idea/

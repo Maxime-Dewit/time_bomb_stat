@@ -1,0 +1,26 @@
+{% load game_extras %}
+{% if pairs %}
+<div class="bars">
+  {% for p in pairs %}
+  <div class="bars__row" style="grid-template-columns:minmax(0,1.4fr) 1fr auto">
+    <div class="row" style="gap:6px; flex-wrap:nowrap; min-width:0">
+      {% avatar p.a 'xs' %}{% avatar p.b 'xs' %}
+      <span class="small" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap"><a href="{{ p.a.get_absolute_url }}"><strong>{{ p.a.name }}</strong></a> & <a href="{{ p.b.get_absolute_url }}"><strong>{{ p.b.name }}</strong></a></span>
+    </div>
+    {% if metric == "villain" %}
+      <div class="bars__track"><div class="bars__fill bars__fill--villain" style="width:{{ p.villain_pct|css }}%"></div></div>
+      <span class="bars__value">{{ p.villain_pct|pct }} <span class="muted small">/{{ p.both_villain }}</span></span>
+    {% elif metric == "kind" %}
+      <div class="bars__track"><div class="bars__fill bars__fill--kind" style="width:{{ p.kind_pct|css }}%"></div></div>
+      <span class="bars__value">{{ p.kind_pct|pct }} <span class="muted small">/{{ p.both_kind }}</span></span>
+    {% elif metric == "together" %}
+      <div class="bars__track"><div class="bars__fill bars__fill--muted" style="width:{{ p.together|bar:max|css }}%"></div></div>
+      <span class="bars__value">{{ p.together }} <span class="muted small">parties</span></span>
+    {% else %}
+      <div class="bars__track"><div class="bars__fill" style="width:{{ p.same_pct|css }}%"></div></div>
+      <span class="bars__value">{{ p.same_pct|pct }} <span class="muted small">/{{ p.same }}</span></span>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}<div class="empty small">Pas assez de parties ensemble (≥ {{ pair_min }}).</div>{% endif %}

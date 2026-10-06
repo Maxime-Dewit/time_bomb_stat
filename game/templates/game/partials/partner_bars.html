@@ -1,0 +1,22 @@
+{% load game_extras %}
+{% if pairs %}
+<div class="bars">
+  {% for p in pairs %}
+  {% if mode == "vs" %}{% with value=p.a_vs_b_pct %}
+  <div class="bars__row">
+    {% player_chip p.b %}
+    <div class="bars__track" title="{{ p.a_wins_opposed }} victoire{{ p.a_wins_opposed|pluralize }} sur {{ p.opposed }}"><div class="bars__fill bars__fill--villain" style="width:{{ value|css }}%"></div></div>
+    <span class="bars__value">{{ value|pct }} <span class="muted small">/{{ p.opposed }}</span></span>
+  </div>
+  {% endwith %}{% else %}{% with value=p.same_pct %}
+  <div class="bars__row">
+    {% player_chip p.b %}
+    <div class="bars__track" title="{{ p.same_wins }} victoire{{ p.same_wins|pluralize }} sur {{ p.same }}"><div class="bars__fill" style="width:{{ value|css }}%"></div></div>
+    <span class="bars__value">{{ value|pct }} <span class="muted small">/{{ p.same }}</span></span>
+  </div>
+  {% endwith %}{% endif %}
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty small">Pas encore assez de parties ensemble.</div>
+{% endif %}

@@ -1,0 +1,161 @@
+{% extends "game/base.html" %}
+{% load game_extras %}
+{% block title %}{{ player.name }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div class="profile-hero">
+    {% avatar player 'xl' %}
+    <div>
+      <span class="eyebrow">Profil joueur · {{ period.label }}</span>
+      <h1>{{ player.name }}</h1>
+      <div class="badges">
+        {% if rank %}<span class="pill pill--accent">#{{ rank }} sur {{ ranked_count }}</span>{% endif %}
+        {% if line %}<span class="pill">Elo {{ line.elo_rounded }} <span class="muted">(max {{ line.elo_peak|floatformat:0 }})</span></span>{% endif %}
+        {% if titles.day %}<span class="pill">👑 {{ titles.day }} soirée{{ titles.day|pluralize }} gagnée{{ titles.day|pluralize }}</span>{% endif %}
+        {% if titles.month %}<span class="pill">🏆 {{ titles.month }} mois</span>{% endif %}
+        {% if titles.year %}<span class="pill">🌟 {{ titles.year }} année{{ titles.year|pluralize }}</span>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% include "game/partials/period_filter.html" with compact=True %}
+</div>
+
+{% if not line %}
+  <div class="card empty"><span class="empty__icon">🕳️</span>{{ player.name }} n'a pas joué sur cette période.</div>
+{% else %}
+
+<section class="kpis" style="margin-bottom:20px">
+  <div class="kpi row" style="gap:16px; flex-wrap:nowrap">
+    <div class="ring ring--lg" style="--p:{{ line.win_pct|css }}"><span>{{ line.win_pct|pct }}</span></div>
+    <div><div class="kpi__label">Victoires</div><div class="kpi__value num">{{ line.wins }}<span class="muted" style="font-size:1rem">/{{ line.games }}</span></div></div>
+  </div>
+  <div class="kpi"><div class="kpi__label">Série en cours</div>
+    <div class="kpi__value num">{% if line.current_streak > 0 %}🔥 {{ line.current_streak }}{% elif line.current_streak < 0 %}🧊 {{ line.current_streak|cut:"-" }}{% else %}—{% endif %}</div>
+    <div class="kpi__hint">{% if line.current_streak > 0 %}victoires d'affilée{% elif line.current_streak < 0 %}défaites d'affilée{% endif %}</div></div>
+  <div class="kpi"><div class="kpi__label">Records de séries</div>
+    <div class="kpi__value num">{{ line.best_streak }} <span class="muted" style="font-size:1rem">/ {{ line.worst_streak }}</span></div>
+    <div class="kpi__hint">victoires / défaites d'affilée</div></div>
+  <div class="kpi"><div class="kpi__label">Distinctions</div>
+    <div class="kpi__value num">⭐ {{ line.best }} <span class="muted" style="font-size:1rem">· 🫠 {{ line.worst }}</span></div>
+    <div class="kpi__hint">{{ line.best_rate|pct }} des parties en MVP</div></div>
+  <div class="kpi"><div class="kpi__label">Soirées</div>
+    <div class="kpi__value num">{{ line.days|length }}</div>
+    <div class="kpi__hint">du {{ line.first_day|date:"d/m/y" }} au {{ line.last_day|date:"d/m/y" }}</div></div>
+</section>
+
+<div class="grid grid-2">
+  <section class="card">
+    <div class="card__head"><div><h2>Gentil ou méchant&nbsp;?</h2><p>Taux de victoire dans chaque camp</p></div></div>
+    <div class="role-compare">
+      <div class="role-box role-box--kind">
+        <div class="kpi__label">🛡️ En gentil</div>
+        <div class="big kind-ink">{{ line.kind_pct|pct }}</div>
+        <div class="small muted">{{ line.kind_wins }} victoire{{ line.kind_wins|pluralize }} sur {{ line.kind_games }}</div>
+      </div>
+      <div class="role-box role-box--villain">
+        <div class="kpi__label">😈 En méchant</div>
+        <div class="big villain-ink">{{ line.villain_pct|pct }}</div>
+        <div class="small muted">{{ line.villain_wins }} victoire{{ line.villain_wins|pluralize }} sur {{ line.villain_games }}</div>
+      </div>
+    </div>
+    <p class="small" style="margin:18px 0 6px">Rôles tirés</p>
+    <div class="split split--lg" role="img" aria-label="{{ line.kind_games }} parties en gentil, {{ line.villain_games }} en méchant">
+      <span class="k" style="width:{{ line.kind_games|bar:line.games|css }}%"></span><span class="v" style="flex:1"></span>
+    </div>
+    <div class="split-legend"><span class="kind-ink">{{ line.kind_games }} fois gentil</span><span class="villain-ink">{{ line.villain_games }} fois méchant ({{ line.villain_rate|pct }})</span></div>
+  </section>
+
+  <section class="card">
+    <div class="card__head">
+      <div><h2>Évolution</h2><p>Partie après partie</p></div>
+      <div class="row" data-chart-switch="player-evo">
+        <button class="chip" type="button" data-metric="elo" aria-pressed="true">Elo</button>
+        <button class="chip" type="button" data-metric="winrate" aria-pressed="false">% victoires</button>
+      </div>
+    </div>
+    <div class="chart chart--short"><canvas id="player-evo" aria-label="Évolution de {{ player.name }}"></canvas></div>
+  </section>
+
+  <section class="card span-all">
+    <div class="card__head"><div><h2>Résultats par mois</h2><p>Victoires et défaites</p></div>
+      <div class="legend"><span><i class="dot" style="background:var(--accent)"></i>Victoires</span><span><i class="dot" style="background:var(--surface-3)"></i>Défaites</span></div>
+    </div>
+    <div class="chart chart--short"><canvas id="player-months" aria-label="Résultats mensuels"></canvas></div>
+  </section>
+
+  <section class="card">
+    <div class="card__head"><div><h2>🤝 Meilleurs alliés</h2><p>% de victoire dans la même équipe (≥ {{ partner_min }} parties)</p></div></div>
+    {% include "game/partials/partner_bars.html" with pairs=allies mode="same" %}
+  </section>
+
+  <section class="card">
+    <div class="card__head"><div><h2>⚔️ Bêtes noires</h2><p>% de victoire face à eux, dans l'autre camp (≥ {{ partner_min }} parties)</p></div></div>
+    {% include "game/partials/partner_bars.html" with pairs=rivals mode="vs" %}
+  </section>
+
+  <section class="card card--flush span-all">
+    <div class="card__head"><div><h2>Avec chaque joueur</h2><p>Clique sur une colonne pour trier</p></div></div>
+    <div class="table-wrap">
+      <table class="table" data-sortable>
+        <thead><tr>
+          <th>Joueur</th>
+          <th class="num" data-sort="num">Ensemble</th>
+          <th class="num" data-sort="num">Même équipe</th>
+          <th data-sort="num">% victoire ensemble</th>
+          <th class="num col-kind" data-sort="num">Gentils ensemble</th>
+          <th class="num col-villain" data-sort="num">Méchants ensemble</th>
+          <th class="num" data-sort="num">Face à face</th>
+          <th data-sort="num">% victoire contre</th>
+        </tr></thead>
+        <tbody>
+        {% for p in partners %}
+          <tr>
+            <td>{% player_chip p.b %}</td>
+            <td class="num">{{ p.together }}</td>
+            <td class="num">{{ p.same }}</td>
+            <td data-value="{{ p.same_pct|default_if_none:-1|css }}"><div class="cellbar"><div class="cellbar__track"><div class="cellbar__fill" style="width:{{ p.same_pct|css }}%"></div></div><span class="num">{{ p.same_pct|pct }}</span></div></td>
+            <td class="num col-kind" data-value="{{ p.kind_pct|default_if_none:-1|css }}">{{ p.kind_pct|pct }} <span class="muted small">({{ p.both_kind }})</span></td>
+            <td class="num col-villain" data-value="{{ p.villain_pct|default_if_none:-1|css }}">{{ p.villain_pct|pct }} <span class="muted small">({{ p.both_villain }})</span></td>
+            <td class="num">{{ p.opposed }}</td>
+            <td data-value="{{ p.a_vs_b_pct|default_if_none:-1|css }}"><div class="cellbar"><div class="cellbar__track"><div class="cellbar__fill cellbar__fill--villain" style="width:{{ p.a_vs_b_pct|css }}%"></div></div><span class="num">{{ p.a_vs_b_pct|pct }}</span></div></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card card--flush span-all">
+    <div class="card__head"><div><h2>Dernières parties</h2></div></div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Date</th><th>Partie</th><th>Rôle</th><th>Distinction</th><th>Résultat</th></tr></thead>
+        <tbody>
+        {% for record, won, seat in recent %}
+          <tr>
+            <td class="tabular">{{ record.started_at|date:"d/m/Y H:i" }}</td>
+            <td><a href="{% url 'game:game_detail' record.id %}">#{{ record.id }}</a> <span class="muted small">· {{ record.size }} joueurs</span></td>
+            <td><span class="pill pill--{{ seat.role }}">{% if seat.is_villain %}😈 Méchant{% else %}🛡️ Gentil{% endif %}</span></td>
+            <td>{% if seat.is_best %}⭐ MVP{% elif seat.is_worst %}🫠 Pire{% else %}<span class="muted">—</span>{% endif %}</td>
+            <td>{% if won %}<span class="form-dots"><span class="w">V</span></span> Victoire{% else %}<span class="form-dots"><span class="l">D</span></span> Défaite{% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+{{ timeline|json_script:"player-timeline" }}
+{{ monthly|json_script:"player-monthly" }}
+{% endif %}
+
+<div class="row" style="margin-top:28px; justify-content:flex-end">
+  <form method="post" action="{% url 'game:player_delete' player.pk %}" data-confirm="Supprimer {{ player.name }} et toutes ses participations ? Cette action est irréversible.">
+    {% csrf_token %}<button class="btn btn--sm btn--danger" type="submit">Supprimer ce joueur</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}{% include "game/partials/chartjs.html" %}{% endblock %}

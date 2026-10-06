@@ -1,24 +1,34 @@
 from django.urls import path
-from . import views
 
-app_name = 'game'
+from .views import games, players, stats
+
+app_name = "game"
 
 urlpatterns = [
-    path('', views.index, name='index'),
-    path('create_player/', views.create_player, name='create_player'),
-    path('create_game/', views.create_game, name='create_game'),
-    path('start_game/<int:game_id>/', views.start_game, name='start_game'),
-    path('end_game/<int:game_id>/', views.end_game, name='end_game'),
-    path('join_game/<int:game_id>/', views.join_game, name='join_game'),
-    path('submit_info/<int:game_id>/', views.submit_info, name='submit_info'),
-    path('stats/', views.stats, name='stats'),
-    path('player/<int:player_id>/', views.player_detail, name='player_detail'),
-    path('delete_game/<int:game_id>/', views.delete_game, name='delete_game'),
-    path('delete_player/<int:player_id>/', views.delete_player, name='delete_player'),
-    path('players/', views.players_list, name='players_list'),
-    path('edit_game/<int:game_id>/', views.edit_game, name='edit_game'),
-    path('game/<int:game_id>/', views.game_detail, name='game_detail'),
-    path('manage/<int:game_id>/', views.manage_game, name='manage_game'),
-    path('rematch/<int:game_id>/', views.rematch, name='rematch'),
-    path('remove_participation/<int:game_id>/<int:player_id>/', views.remove_participation, name='remove_participation'),
+    path("", games.home, name="home"),
+    # Parties
+    path("parties/", games.game_list, name="game_list"),
+    path("parties/nouvelle/", games.game_create, name="game_create"),
+    path("parties/<int:pk>/", games.game_detail, name="game_detail"),
+    path("parties/<int:pk>/gerer/", games.game_manage, name="game_manage"),
+    path("parties/<int:pk>/joueurs/", games.game_add_players, name="game_add_players"),
+    path(
+        "parties/<int:pk>/joueurs/<int:player_pk>/retirer/",
+        games.game_remove_player,
+        name="game_remove_player",
+    ),
+    path("parties/<int:pk>/revanche/", games.game_rematch, name="game_rematch"),
+    path("parties/<int:pk>/supprimer/", games.game_delete, name="game_delete"),
+    # Joueurs
+    path("joueurs/", players.player_list, name="player_list"),
+    path("joueurs/nouveau/", players.player_create, name="player_create"),
+    path("joueurs/<int:pk>/", players.player_detail, name="player_detail"),
+    path("joueurs/<int:pk>/supprimer/", players.player_delete, name="player_delete"),
+    # Statistiques
+    path("stats/", stats.overview, name="stats"),
+    path("stats/evolution/", stats.evolution, name="stats_evolution"),
+    path("stats/duos/", stats.duos, name="stats_duos"),
+    path("stats/records/", stats.records, name="stats_records"),
+    path("stats/soirees/", stats.sessions, name="stats_sessions"),
+    path("stats/soirees/<str:day>/", stats.session_detail, name="stats_session"),
 ]

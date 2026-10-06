@@ -1,0 +1,57 @@
+{% extends "game/stats/base.html" %}
+{% load game_extras %}
+{% block title %}Soirée du {{ summary.start|date:"j F Y" }}{% endblock %}
+{% block heading %}{{ summary.start|date:"l j F Y"|capfirst }}{% endblock %}
+{% block intro %}
+<div class="row" style="margin-top:12px">
+  {% if prev_day %}<a class="btn btn--sm" href="{% url 'game:stats_session' prev_day|date:'Y-m-d' %}">← {{ prev_day|date:"d/m/Y" }}</a>{% endif %}
+  {% if next_day %}<a class="btn btn--sm" href="{% url 'game:stats_session' next_day|date:'Y-m-d' %}">{{ next_day|date:"d/m/Y" }} →</a>{% endif %}
+</div>
+{% endblock %}
+{% block filters %}{% endblock %}
+
+{% block stats %}
+<section class="kpis" style="margin-bottom:20px">
+  <div class="kpi"><div class="kpi__label">👑 Roi de la soirée</div>
+    <div class="stack" style="gap:6px; margin-top:8px">{% for c in summary.champions %}{% player_chip c.player %}{% endfor %}</div>
+    <div class="kpi__hint">{{ summary.champion_wins }} victoire{{ summary.champion_wins|pluralize }}</div></div>
+  <div class="kpi"><div class="kpi__label">Score</div>
+    <div class="kpi__value num"><span class="kind-ink">{{ summary.kind_wins }}</span> <span class="muted">–</span> <span class="villain-ink">{{ summary.villain_wins }}</span></div>
+    <div class="kpi__hint">gentils – méchants</div></div>
+  <div class="kpi"><div class="kpi__label">Parties</div><div class="kpi__value num">{{ summary.games }}</div><div class="kpi__hint">{{ summary.players }} joueurs</div></div>
+  <div class="kpi"><div class="kpi__label">⭐ MVP de la soirée</div>
+    <div class="stack" style="gap:6px; margin-top:8px">{% for c in summary.mvps %}<div class="row" style="gap:6px">{% player_chip c.player %}<span class="muted small">×{{ c.best }}</span></div>{% empty %}<span class="muted">—</span>{% endfor %}</div></div>
+</section>
+
+<div class="grid grid-2">
+  <section class="card card--flush span-all">
+    <div class="card__head"><div><h2>La soirée en un coup d'œil</h2><p>Une colonne par partie : bleu = gentil, rouge = méchant, encadré = victoire</p></div></div>
+    <div class="table-wrap">
+      <table class="table session-grid">
+        <thead><tr>
+          <th>Joueur</th>
+          {% for g in games %}<th class="num"><a href="{{ g.get_absolute_url }}">#{{ g.pk }}</a><br><span style="font-weight:500">{{ g.started_at|date:"H:i" }}</span></th>{% endfor %}
+          <th class="num">V</th><th class="num">%</th>
+        </tr></thead>
+        <tbody>
+          {% for line in leaderboard %}
+          <tr>
+            <td>{% player_chip line.player %}</td>
+            {% for g in games %}
+              <td class="res">{% for p in g.participations.all %}{% if p.player_id == line.player.pk %}<span class="res-cell res-cell--{{ p.role }} {% if p.role == g.winner_role %}res-cell--won{% endif %}" title="{{ p.get_role_display }} — {% if p.role == g.winner_role %}victoire{% else %}défaite{% endif %}">{% if p.role == g.winner_role %}V{% else %}D{% endif %}{% if p.info == 'meilleur' %}⭐{% endif %}</span>{% endif %}{% endfor %}</td>
+            {% endfor %}
+            <td class="num"><strong>{{ line.wins }}</strong></td>
+            <td class="num">{{ line.win_pct|pct }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card card--flush span-all">
+    <div class="card__head"><div><h2>Les parties</h2></div></div>
+    {% for game in games %}{% include "game/partials/game_item.html" %}{% endfor %}
+  </section>
+</div>
+{% endblock %}

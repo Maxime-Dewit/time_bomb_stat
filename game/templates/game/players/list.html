@@ -1,0 +1,63 @@
+{% extends "game/base.html" %}
+{% load game_extras %}
+{% block title %}Joueurs{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <span class="eyebrow">La bande</span>
+    <h1>Joueurs</h1>
+    <p>{{ lines|length }} joueur{{ lines|length|pluralize }} actif{{ lines|length|pluralize }} sur la période « {{ period.label|lower }} ».</p>
+  </div>
+  <form method="post" action="{% url 'game:player_create' %}" class="row" style="flex-wrap:nowrap">
+    {% csrf_token %}
+    <label class="sr-only" for="id_name">Nom du joueur</label>
+    {{ form.name.as_widget }}
+    <button class="btn btn--primary" type="submit">➕ Ajouter</button>
+  </form>
+</div>
+
+<div class="filters">
+  <input class="input" style="max-width:240px" type="search" placeholder="Rechercher un joueur…" data-filter-target="#players" aria-label="Rechercher">
+  <span class="sep" aria-hidden="true"></span>
+  <span class="muted small">Trier par</span>
+  {% for key, label in sorts.items %}
+    <a class="chip" href="{% querystring tri=key %}" {% if sort == key %}aria-current="true"{% endif %}>{{ label }}</a>
+  {% endfor %}
+</div>
+
+<div class="player-grid" id="players">
+  {% for line in lines %}
+  <a class="player-card" href="{{ line.player.get_absolute_url }}{% if not period.is_all %}?p={{ period.key }}{% endif %}" data-name="{{ line.player.name|lower }}">
+    <div class="player-card__top">
+      {% avatar line.player 'lg' %}
+      <div style="flex:1; min-width:0">
+        <div class="player-card__name">{{ line.player.name }}</div>
+        <div class="muted small">Elo {{ line.elo_rounded }}{% if line.current_streak >= 2 %} · 🔥 {{ line.current_streak }}{% endif %}</div>
+      </div>
+      <div class="ring" style="--p:{{ line.win_pct|css }}"><span>{{ line.win_pct|pct }}</span></div>
+    </div>
+    <div class="player-card__stats">
+      <div><strong>{{ line.games }}</strong><small>parties</small></div>
+      <div><strong class="kind-ink">{{ line.kind_pct|pct }}</strong><small>gentil</small></div>
+      <div><strong class="villain-ink">{{ line.villain_pct|pct }}</strong><small>méchant</small></div>
+    </div>
+    <div class="row row--between">
+      {% form_dots line.form %}
+      {% if line.best %}<span class="pill pill--accent">⭐ {{ line.best }}</span>{% endif %}
+    </div>
+  </a>
+  {% empty %}
+  <div class="card empty span-all"><span class="empty__icon">👥</span>Aucune partie sur cette période.</div>
+  {% endfor %}
+</div>
+
+{% if inactive %}
+<section class="card" style="margin-top:24px">
+  <div class="card__head"><div><h2>Sans partie sur la période</h2></div></div>
+  <div class="row">
+    {% for p in inactive %}{% player_chip p %}{% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,15 @@
+{% load game_extras %}
+<div class="period-row">
+  <div class="period-row__label">
+    {% if s.granularity == "day" %}<a href="{% url 'game:stats_session' s.start|date:'Y-m-d' %}">{{ s.start|date:"D j F Y"|capfirst }}</a>
+    {% else %}<a href="{% url 'game:stats' %}?p={{ s.key }}">{{ s.label }}</a>{% endif %}
+    <div class="small muted" style="font-weight:500">{{ s.games }} partie{{ s.games|pluralize }} · {{ s.players }} joueurs</div>
+  </div>
+  <div><span class="role-label">👑 Champion</span><div class="who">{% for c in s.champions|slice:":3" %}{% player_chip c.player c.wins|stringformat:"s"|add:" V" %}{% if forloop.last and s.champions|length > 3 %}<span class="muted small">+{{ s.champions|length|add:"-3" }} ex æquo</span>{% endif %}{% endfor %}</div></div>
+  <div><span class="role-label villain-ink">😈 Top méchant</span><div class="who">{% for c in s.top_villains|slice:":3" %}{% player_chip c.player c.villain_wins|stringformat:"s"|add:" V" %}{% if forloop.last and s.top_villains|length > 3 %}<span class="muted small">+{{ s.top_villains|length|add:"-3" }} ex æquo</span>{% endif %}{% empty %}<span class="muted">—</span>{% endfor %}</div></div>
+  <div><span class="role-label kind-ink">🛡️ Top gentil</span><div class="who">{% for c in s.top_kinds|slice:":3" %}{% player_chip c.player c.kind_wins|stringformat:"s"|add:" V" %}{% if forloop.last and s.top_kinds|length > 3 %}<span class="muted small">+{{ s.top_kinds|length|add:"-3" }} ex æquo</span>{% endif %}{% empty %}<span class="muted">—</span>{% endfor %}</div></div>
+  <div>
+    <div class="split"><span class="k" style="width:{{ s.kind_pct|css }}%"></span><span class="v" style="flex:1"></span></div>
+    <div class="split-legend small"><span class="kind-ink">{{ s.kind_wins }}</span><span class="muted">{% if s.mvps %}⭐ {{ s.mvps.0.player.name }}{% endif %}</span><span class="villain-ink">{{ s.villain_wins }}</span></div>
+  </div>
+</div>

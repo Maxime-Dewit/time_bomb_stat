@@ -1,0 +1,168 @@
+{% extends "game/stats/base.html" %}
+{% load game_extras %}
+{% block title %}Statistiques{% endblock %}
+{% block heading %}Vue d'ensemble{% endblock %}
+
+{% block stats %}
+{% with o=engine.overview %}
+<section class="kpis" style="margin-bottom:20px">
+  <div class="kpi"><div class="kpi__label">Parties</div><div class="kpi__value num">{{ o.games }}</div><div class="kpi__hint">{{ o.sessions }} soirée{{ o.sessions|pluralize }} · {{ o.games_per_session }} / soirée</div></div>
+  <div class="kpi"><div class="kpi__label">Joueurs</div><div class="kpi__value num">{{ o.players }}</div><div class="kpi__hint">{{ o.avg_size }} par table en moyenne</div></div>
+  <div class="kpi">
+    <div class="kpi__label">Équilibre des camps</div>
+    <div class="kpi__value num"><span class="kind-ink">{{ o.kind_pct|pct }}</span> <span class="muted" style="font-size:1rem">vs</span> <span class="villain-ink">{{ o.villain_pct|pct }}</span></div>
+    <div class="split" style="margin-top:10px" role="img" aria-label="Victoires gentils {{ o.kind_pct|pct }}, méchants {{ o.villain_pct|pct }}"><span class="k" style="width:{{ o.kind_pct|css }}%"></span><span class="v" style="flex:1"></span></div>
+  </div>
+  <div class="kpi"><div class="kpi__label">Durée moyenne</div><div class="kpi__value num">{% if o.avg_minutes %}{{ o.avg_minutes }} <small style="font-size:1rem">min</small>{% else %}—{% endif %}</div><div class="kpi__hint">par partie</div></div>
+</section>
+{% endwith %}
+
+<div class="grid grid-2">
+  <section class="card">
+    <div class="card__head"><div><h2>🏆 Podium</h2><p>Meilleur % de victoires (≥ {{ min_games }} parties)</p></div></div>
+    {% if podium %}
+    <div class="podium">
+      {% for line in podium %}
+      <div class="podium__step podium__step--{{ forloop.counter }}">
+        <span class="medal" aria-hidden="true">{% cycle '🥇' '🥈' '🥉' %}</span>
+        {% avatar line.player 'lg' %}
+        <a class="podium__name" href="{{ line.player.get_absolute_url }}?p={{ period.key }}">{{ line.player.name }}</a>
+        <div class="podium__block"><strong>{{ line.win_pct|pct }}</strong><small>{{ line.wins }}/{{ line.games }}</small></div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}<div class="empty small">Personne n'a encore {{ min_games }} parties : baisse le minimum.</div>{% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card__head"><div><h2>🎭 Profils marquants</h2><p>Qui brille dans quel rôle</p></div></div>
+    <div class="stack" style="gap:12px">
+      {% for s in superlatives %}
+      <div class="row row--between" style="flex-wrap:nowrap">
+        <div class="row" style="flex-wrap:nowrap; min-width:0">
+          <span style="font-size:1.4rem" aria-hidden="true">{{ s.icon }}</span>
+          <div style="min-width:0"><div class="small muted">{{ s.title }}</div>{% player_chip s.line.player %}</div>
+        </div>
+        <div style="text-align:right"><strong class="num">{{ s.value }}</strong><div class="small muted">{{ s.hint }}</div></div>
+      </div>
+      {% empty %}<div class="empty small">Pas assez de données.</div>{% endfor %}
+    </div>
+  </section>
+
+  <section class="card span-all">
+    <div class="card__head">
+      <div>
+        <h2>Gentil × Méchant</h2>
+        <p>Chaque bulle est un joueur : à droite il gagne souvent en gentil, en haut souvent en méchant. Plus la bulle est grosse, plus il a de victoires. Au-dessus de la diagonale : meilleur en méchant.</p>
+      </div>
+      <div class="legend"><span><i class="dot dot--villain"></i>Meilleur en méchant</span><span><i class="dot dot--kind"></i>Meilleur en gentil</span></div>
+    </div>
+    <div class="chart chart--tall"><canvas id="scatter" aria-label="Taux de victoire en gentil contre taux de victoire en méchant"></canvas></div>
+    {{ scatter|json_script:"scatter-data" }}
+  </section>
+
+  <section class="card card--flush span-all">
+    <div class="card__head">
+      <div><h2>Classement général</h2><p>Clique sur une colonne pour trier · Elo corrigé de l'avantage naturel d'un camp</p></div>
+    </div>
+    <div class="table-wrap">
+      <table class="table" data-sortable>
+        <thead><tr>
+          <th class="rank" data-sort="num">#</th>
+          <th data-sort="text">Joueur</th>
+          <th class="num" data-sort="num">Parties</th>
+          <th class="num" data-sort="num">V</th>
+          <th class="num" data-sort="num">D</th>
+          <th data-sort="num" aria-sort="descending">% victoires</th>
+          <th class="num col-kind" data-sort="num">% gentil</th>
+          <th class="num col-villain" data-sort="num">% méchant</th>
+          <th class="num" data-sort="num">% tiré méchant</th>
+          <th class="num" data-sort="num">Elo</th>
+          <th class="num" data-sort="num">⭐</th>
+          <th class="num" data-sort="num">🫠</th>
+          <th class="num" data-sort="num">Série max</th>
+          <th>Forme</th>
+        </tr></thead>
+        <tbody>
+        {% for line in leaderboard %}
+          <tr>
+            <td class="rank">{{ line.rank }}</td>
+            <td data-value="{{ line.player.name }}">{% player_chip line.player %}</td>
+            <td class="num">{{ line.games }}</td>
+            <td class="num">{{ line.wins }}</td>
+            <td class="num">{{ line.losses }}</td>
+            <td data-value="{{ line.win_pct|css }}"><div class="cellbar"><div class="cellbar__track"><div class="cellbar__fill" style="width:{{ line.win_pct|css }}%"></div></div><span class="num">{{ line.win_pct|pct:1 }}</span></div></td>
+            <td class="num col-kind" data-value="{{ line.kind_pct|default_if_none:-1|css }}">{{ line.kind_pct|pct }} <span class="muted small">/{{ line.kind_games }}</span></td>
+            <td class="num col-villain" data-value="{{ line.villain_pct|default_if_none:-1|css }}">{{ line.villain_pct|pct }} <span class="muted small">/{{ line.villain_games }}</span></td>
+            <td class="num" data-value="{{ line.villain_rate|css }}">{{ line.villain_rate|pct }}</td>
+            <td class="num">{{ line.elo_rounded }}</td>
+            <td class="num">{{ line.best }}</td>
+            <td class="num">{{ line.worst }}</td>
+            <td class="num">{{ line.best_streak }}</td>
+            <td>{% form_dots line.form %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="14" class="muted">Personne n'a encore {{ min_games }} parties sur la période.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head"><div><h2>😈 Top méchants</h2><p>Nombre de victoires en méchant</p></div></div>
+    <div class="bars">
+      {% with top=top_villains.0.villain_wins %}
+      {% for line in top_villains %}
+      <div class="bars__row">{% player_chip line.player %}<div class="bars__track"><div class="bars__fill bars__fill--villain" style="width:{{ line.villain_wins|bar:top|css }}%"></div></div><span class="bars__value">{{ line.villain_wins }}</span></div>
+      {% endfor %}{% endwith %}
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head"><div><h2>🛡️ Top gentils</h2><p>Nombre de victoires en gentil</p></div></div>
+    <div class="bars">
+      {% with top=top_kinds.0.kind_wins %}
+      {% for line in top_kinds %}
+      <div class="bars__row">{% player_chip line.player %}<div class="bars__track"><div class="bars__fill bars__fill--kind" style="width:{{ line.kind_wins|bar:top|css }}%"></div></div><span class="bars__value">{{ line.kind_wins }}</span></div>
+      {% endfor %}{% endwith %}
+    </div>
+  </section>
+
+  <section class="card span-all">
+    <div class="card__head">
+      <div><h2>Équilibre des camps, mois par mois</h2><p>Nombre de parties gagnées par chaque camp</p></div>
+      <div class="legend"><span><i class="dot dot--kind"></i>Gentils</span><span><i class="dot dot--villain"></i>Méchants</span></div>
+    </div>
+    <div class="chart chart--short"><canvas id="side-months" aria-label="Victoires par camp et par mois"></canvas></div>
+    {{ side_by_month|json_script:"side-months-data" }}
+  </section>
+
+  <section class="card">
+    <div class="card__head"><div><h2>Selon le nombre de joueurs</h2><p>Qui gagne le plus selon la taille de la table</p></div></div>
+    <div class="stack" style="gap:14px">
+      {% for s in table_sizes %}
+      <div>
+        <div class="row row--between small"><strong>{{ s.size }} joueurs</strong><span class="muted">{{ s.games }} partie{{ s.games|pluralize }} · {{ s.avg_villains }} méchants en moy.</span></div>
+        <div class="split" style="margin-top:6px"><span class="k" style="width:{{ s.kind_pct|css }}%"></span><span class="v" style="flex:1"></span></div>
+        <div class="split-legend small"><span class="kind-ink">{{ s.kind_pct|pct }}</span><span class="villain-ink">{{ s.villain_pct|pct }}</span></div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head"><div><h2>Selon le jour</h2><p>Parties jouées et % de victoire des gentils</p></div></div>
+    <div class="bars">
+      {% with top=weekday_max %}
+      {% for d in weekdays %}{% if d.games %}
+      <div class="bars__row">
+        <span>{{ d.label }}</span>
+        <div class="bars__track"><div class="bars__fill bars__fill--muted" style="width:{{ d.games|bar:top|css }}%"></div></div>
+        <span class="bars__value">{{ d.games }} <span class="kind-ink small">· {{ d.kind_pct|pct }}</span></span>
+      </div>
+      {% endif %}{% endfor %}{% endwith %}
+    </div>
+  </section>
+</div>
+{% endblock %}

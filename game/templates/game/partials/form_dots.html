@@ -1,0 +1,1 @@
+<span class="form-dots" aria-label="Derniers résultats">{% for won in results %}<span class="{{ won|yesno:'w,l' }}" title="{{ won|yesno:'Victoire,Défaite' }}">{{ won|yesno:'V,D' }}</span>{% endfor %}</span>

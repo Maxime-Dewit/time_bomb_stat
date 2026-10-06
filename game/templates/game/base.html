@@ -1,0 +1,70 @@
+{% load static %}<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Time Bomb Stats{% endblock %} · Time Bomb</title>
+  <meta name="description" content="Suivi des parties de Time Bomb : classements, duos, rivalités et records.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💣</text></svg>">
+  <script>
+    try { const t = localStorage.getItem("tb-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="{% static 'game/css/app.css' %}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar__inner">
+      <a class="brand" href="{% url 'game:home' %}">
+        <svg class="brand__logo" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="14" cy="19" r="10" fill="currentColor"/>
+          <rect x="11" y="6.5" width="7" height="4" rx="1.2" fill="currentColor"/>
+          <path d="M16 7 C 18 3, 21 4, 23 6" stroke="var(--muted)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+          <g class="brand__spark"><circle cx="24" cy="6" r="3.2" fill="var(--accent)"/><circle cx="24" cy="6" r="1.4" fill="#ffe08a"/></g>
+          <circle cx="10.5" cy="15.5" r="2.4" fill="var(--bg)" opacity=".35"/>
+        </svg>
+        <span>Time Bomb <small>stats</small></span>
+      </a>
+      {% with name=request.resolver_match.url_name %}
+      <nav class="nav" aria-label="Navigation principale">
+        <a href="{% url 'game:home' %}" {% if name == 'home' %}aria-current="page"{% endif %}>Accueil</a>
+        <a href="{% url 'game:game_list' %}" {% if name|slice:":4" == 'game' %}aria-current="page"{% endif %}>Parties</a>
+        <a href="{% url 'game:player_list' %}" {% if name|slice:":6" == 'player' %}aria-current="page"{% endif %}>Joueurs</a>
+        <a href="{% url 'game:stats' %}" {% if name|slice:":5" == 'stats' %}aria-current="page"{% endif %}>Statistiques</a>
+      </nav>
+      {% endwith %}
+      <div class="row topbar__actions">
+        <button class="icon-btn" type="button" data-theme-toggle aria-label="Changer de thème" title="Thème clair / sombre">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        </button>
+        <form method="post" action="{% url 'game:game_create' %}" class="inline">
+          {% csrf_token %}
+          <button class="btn btn--primary" type="submit">💣 <span class="btn-label">Nouvelle partie</span></button>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="container row row--between">
+      <span>💣 Time Bomb Stats — que la meilleure équipe désamorce.</span>
+      <a href="{% url 'admin:index' %}">Administration</a>
+    </div>
+  </footer>
+
+  {% if messages %}
+  <div class="toasts" role="status">
+    {% for message in messages %}
+      <div class="toast {% if message.tags == 'error' %}toast--error{% endif %}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <script src="{% static 'game/js/app.js' %}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

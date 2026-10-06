@@ -1,0 +1,72 @@
+{% extends "game/stats/base.html" %}
+{% load game_extras %}
+{% block title %}Évolution & palmarès{% endblock %}
+{% block heading %}Évolution & palmarès{% endblock %}
+
+{% block stats %}
+<div class="stack">
+  <section class="card">
+    <div class="card__head">
+      <div><h2>La course dans le temps</h2><p>Une valeur par soirée. Clique sur les joueurs pour les mettre en avant (5 au maximum) ; les autres restent en gris.</p></div>
+      <div class="row" data-chart-switch="timeline" role="group" aria-label="Indicateur">
+        <button class="chip" type="button" data-metric="wins" aria-pressed="true">Victoires</button>
+        <button class="chip" type="button" data-metric="villain" aria-pressed="false">😈 En méchant</button>
+        <button class="chip" type="button" data-metric="kind" aria-pressed="false">🛡️ En gentil</button>
+        <button class="chip" type="button" data-metric="winrate" aria-pressed="false">% victoires</button>
+        <button class="chip" type="button" data-metric="elo" aria-pressed="false">Elo</button>
+      </div>
+    </div>
+    <div class="series-picker" data-series-picker="timeline"></div>
+    <div class="chart chart--tall"><canvas id="timeline" aria-label="Évolution des joueurs dans le temps"></canvas></div>
+    {{ timeline|json_script:"timeline-data" }}
+  </section>
+
+  <section class="card card--flush">
+    <div class="card__head"><div><h2>🏆 Titres</h2><p>Combien de fois chacun a fini n°1 (le plus de victoires) — ex æquo comptés pour tous</p></div></div>
+    <div class="table-wrap">
+      <table class="table" data-sortable>
+        <thead><tr>
+          <th data-sort="text">Joueur</th>
+          <th class="num" data-sort="num" aria-sort="descending">🌟 Années</th>
+          <th class="num" data-sort="num">🏆 Mois</th>
+          <th class="num" data-sort="num">👑 Soirées</th>
+          <th class="num col-villain" data-sort="num">😈 Mois top méchant</th>
+          <th class="num col-kind" data-sort="num">🛡️ Mois top gentil</th>
+          <th class="num col-villain" data-sort="num">😈 Soirées top méchant</th>
+          <th class="num col-kind" data-sort="num">🛡️ Soirées top gentil</th>
+        </tr></thead>
+        <tbody>
+          {% for t in titles %}
+          <tr>
+            <td data-value="{{ t.line.player.name }}">{% player_chip t.line.player %}</td>
+            <td class="num">{{ t.year|default:0 }}</td>
+            <td class="num">{{ t.month|default:0 }}</td>
+            <td class="num">{{ t.day|default:0 }}</td>
+            <td class="num col-villain">{{ t.month_villain|default:0 }}</td>
+            <td class="num col-kind">{{ t.month_kind|default:0 }}</td>
+            <td class="num col-villain">{{ t.day_villain|default:0 }}</td>
+            <td class="num col-kind">{{ t.day_kind|default:0 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {% if by_year|length > 0 %}
+  <section class="card card--flush">
+    <div class="card__head"><div><h2>🌟 Palmarès par année</h2></div></div>
+    <div class="timeline-list">
+      {% for s in by_year %}{% include "game/partials/period_row.html" %}{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="card card--flush">
+    <div class="card__head"><div><h2>🏆 Palmarès par mois</h2><p>Champion, meilleur méchant et meilleur gentil de chaque mois</p></div></div>
+    <div class="timeline-list">
+      {% for s in by_month %}{% include "game/partials/period_row.html" %}{% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}
